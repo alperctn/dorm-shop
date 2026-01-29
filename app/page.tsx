@@ -165,6 +165,13 @@ function RequestForm() {
     setSending(true);
     const message = `📣 *Yeni İstek Var!*\n\n👉 ${request}`;
 
+    // Profanity Check (YENİ)
+    const lowerRequest = request.toLowerCase();
+    if (lowerRequest.includes("sakso") || lowerRequest.includes("31")) {
+      alert("ne diyorsun terbiyesiz herif");
+      return;
+    }
+
     try {
       await fetch("/api/telegram", {
         method: "POST",
