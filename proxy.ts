@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     // Sadece /admin ile başlayan yolları kontrol et
     if (request.nextUrl.pathname.startsWith("/admin")) {
         const adminSession = request.cookies.get("admin_session");
