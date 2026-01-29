@@ -53,10 +53,40 @@ export async function POST(request: Request) {
         // 3. Save Updated Stock (Atomic-like operation for our scale)
         await dbServer.put("/products", updatedProducts);
 
-        // 4. Send Notification
+        // 4. Calculate Profit & Save Sale Record
+        let totalProfit = 0;
+        let itemsSummary = "";
+
+        items.forEach((item: any) => {
+            const product = updatedProducts.find((p: any) => p.id === item.id);
+            if (product) {
+                const cost = product.costPrice || 0;
+                const profitPerItem = product.price - cost;
+                totalProfit += profitPerItem * item.quantity;
+                itemsSummary += `${item.quantity}x ${product.name}, `;
+            }
+        });
+
         const deliveryFee = deliveryMethod === "delivery" ? items.reduce((sum: number, item: any) => sum + item.quantity, 0) * 5 : 0;
         const grandTotal = totalPrice + deliveryFee;
 
+        // Delivery fee is pure profit (service)
+        if (deliveryMethod === "delivery") {
+            totalProfit += deliveryFee;
+        }
+
+        const saleRecord = {
+            id: Date.now().toString(),
+            date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
+            items: itemsSummary.slice(0, -2), // Remove trailing comma
+            total: grandTotal,
+            profit: totalProfit,
+            method: "telegram" // or "web"
+        };
+
+        await dbServer.post("/sales", saleRecord);
+
+        // 5. Send Notification
         let message = `*Yeni Sipariş!* 🛒\n\n`;
         items.forEach((item: any) => {
             message += `${item.quantity}x ${item.name}\n`;
@@ -65,6 +95,7 @@ export async function POST(request: Request) {
         if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
         message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
         message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
+        message += `\n📈 *Net Kar:* ₺${totalProfit}`; // Admin convenience in Telegram
 
         await sendTelegramMessage(message);
 

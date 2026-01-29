@@ -8,6 +8,7 @@ export interface Product {
     stock: number;
     category: string;
     emoji?: string;
+    imageUrl?: string;
 }
 
 export const INITIAL_PRODUCTS: Product[] = [

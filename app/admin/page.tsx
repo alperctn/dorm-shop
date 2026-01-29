@@ -16,10 +16,11 @@ export default function AdminPage() {
     const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [revenue, setRevenue] = useState<{ total: number, totalProfit: number, history: SaleRecord[] }>({ total: 0, totalProfit: 0, history: [] });
+    const [visitors, setVisitors] = useState<{ date: string, count: number }[]>([]);
     // const [password, setPassword] = useState(""); // Removed
     const [categories, setCategories] = useState<Category[]>([]);
     // const [newCategoryName, setNewCategoryName] = useState(""); // Removed
-    const [newProduct, setNewProduct] = useState({ name: "", price: "", costPrice: "", stock: "", category: "" });
+    const [newProduct, setNewProduct] = useState({ name: "", price: "", costPrice: "", stock: "", category: "", imageUrl: "" });
 
     // Protect the route
     // Middleware handles security, but we can double check cookie presence if needed
@@ -37,10 +38,30 @@ export default function AdminPage() {
             if (catData.length > 0) {
                 setNewProduct(prev => ({ ...prev, category: catData[0].slug }));
             }
+
+            // Fetch Real Revenue from Server
+            try {
+                const revRes = await fetch("/api/revenue");
+                if (revRes.ok) {
+                    const revData = await revRes.json();
+                    setRevenue(revData);
+                }
+            } catch (err) {
+                console.error("Revenue fetch error", err);
+            }
+
+            // Fetch Visitor Stats
+            try {
+                const visRes = await fetch("/api/visit");
+                if (visRes.ok) {
+                    const visData = await visRes.json();
+                    setVisitors(visData);
+                }
+            } catch (err) {
+                console.error("Visit fetch error", err);
+            }
         };
         load();
-
-        setRevenue(getRevenue());
     }, []);
 
     // Internal login handler removed
@@ -78,13 +99,14 @@ export default function AdminPage() {
             costPrice: Number(newProduct.costPrice),
             stock: Number(newProduct.stock),
             category: newProduct.category,
-            emoji: "📦" // Default emoji
+            emoji: "📦", // Default emoji
+            imageUrl: newProduct.imageUrl
         };
         const updatedProducts = [...products, product];
         setProducts(updatedProducts);
         await saveProducts(updatedProducts);
 
-        setNewProduct({ name: "", price: "", costPrice: "", stock: "", category: categories[0]?.slug || "yiyecekler" });
+        setNewProduct({ name: "", price: "", costPrice: "", stock: "", category: categories[0]?.slug || "yiyecekler", imageUrl: "" });
         alert("Ürün eklendi!");
     };
 
@@ -133,12 +155,31 @@ export default function AdminPage() {
                     </div>
 
                     <button
-                        onClick={() => { if (confirm("Ciro sıfırlansın mı?")) resetRevenue(); setRevenue(getRevenue()); }}
+                        onClick={async () => {
+                            if (confirm("Ciro ve geçmiş satışlar SIFIRLANACAK! Emin misiniz?")) {
+                                await fetch("/api/revenue", { method: "DELETE" });
+                                setRevenue({ total: 0, totalProfit: 0, history: [] });
+                            }
+                        }}
                         className="absolute top-4 right-4 text-xs text-red-500 hover:text-red-400"
                         title="Sıfırla"
                     >
                         🔄
                     </button>
+                </div>
+
+                <div className="glass-card p-6 border-l-4 border-blue-500 relative">
+                    <h2 className="text-lg font-bold text-zinc-400 mb-2">Günlük Ziyaretçi</h2>
+                    <div className="text-4xl font-bold text-blue-400">
+                        {visitors.length > 0 ? visitors[0].count : 0}
+                        <span className="text-sm text-zinc-600 font-normal ml-2">Kişi</span>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <h2 className="text-sm font-bold text-zinc-500 mb-1">Dün</h2>
+                        <div className="text-2xl font-bold text-zinc-500">
+                            {visitors.length > 1 ? visitors[1].count : 0}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Chart Section */}
@@ -195,6 +236,67 @@ export default function AdminPage() {
                                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                                 required
                             />
+                        </div>
+
+                        <div className="col-span-2 md:col-span-2">
+                            <label className="text-[10px] text-zinc-500 block mb-1">Ürün Resmi (Otomatik Küçültülür)</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-400 file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 transition"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+
+                                    // Image Compression Logic
+                                    const reader = new FileReader();
+                                    reader.readAsDataURL(file);
+                                    reader.onload = (event) => {
+                                        const img = new Image();
+                                        img.src = event.target?.result as string;
+                                        img.onload = () => {
+                                            const canvas = document.createElement("canvas");
+                                            const MAX_WIDTH = 500;
+                                            const MAX_HEIGHT = 500;
+                                            let width = img.width;
+                                            let height = img.height;
+
+                                            if (width > height) {
+                                                if (width > MAX_WIDTH) {
+                                                    height *= MAX_WIDTH / width;
+                                                    width = MAX_WIDTH;
+                                                }
+                                            } else {
+                                                if (height > MAX_HEIGHT) {
+                                                    width *= MAX_HEIGHT / height;
+                                                    height = MAX_HEIGHT;
+                                                }
+                                            }
+
+                                            canvas.width = width;
+                                            canvas.height = height;
+                                            const ctx = canvas.getContext("2d");
+                                            ctx?.drawImage(img, 0, 0, width, height);
+
+                                            // Convert to compressed Base64
+                                            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                                            setNewProduct({ ...newProduct, imageUrl: dataUrl });
+                                        };
+                                    };
+                                }}
+                            />
+                            {newProduct.imageUrl && (
+                                <div className="mt-2 relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-700">
+                                    <img src={newProduct.imageUrl} alt="Önizleme" className="object-contain w-full h-full" />
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewProduct({ ...newProduct, imageUrl: "" })}
+                                        className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div>

@@ -61,9 +61,20 @@ export default function CategoryPage() {
                             >
                                 <div>
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className="text-3xl">{product.emoji || "📦"}</div>
+                                        {product.imageUrl ? (
+                                            <div className="w-full h-32 relative mb-2 rounded-lg overflow-hidden">
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    className="object-contain w-full h-full"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="text-3xl">{product.emoji || "📦"}</div>
+                                        )}
+
                                         {product.stock > 0 && product.stock <= 5 && (
-                                            <span className="text-[10px] uppercase font-bold bg-red-500/20 text-red-500 px-2 py-0.5 rounded">
+                                            <span className="absolute top-2 right-2 text-[10px] uppercase font-bold bg-red-500/90 text-white px-2 py-0.5 rounded shadow-sm">
                                                 Son {product.stock}
                                             </span>
                                         )}
@@ -99,7 +110,7 @@ export default function CategoryPage() {
                     )}
                 </div>
 
-                <CartFab />
+                {/* CartFab Global in Layout */}
             </div>
         </main>
     );
@@ -127,20 +138,4 @@ function AddToCartButton({ product }: { product: any }) {
     );
 }
 
-function CartFab() {
-    const { totalItems, totalPrice } = useCart();
-    if (totalItems === 0) return null;
-
-    return (
-        <Link href="/checkout" className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4">
-            <div className="bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold hover:scale-105 transition-transform">
-                <div className="bg-black/10 px-2 py-0.5 rounded-full text-xs">
-                    {totalItems}
-                </div>
-                <span>Sepeti Gör</span>
-                <span>₺{totalPrice}</span>
-                <span>&rarr;</span>
-            </div>
-        </Link>
-    );
-}
+// CartFab removed (Global in layout)

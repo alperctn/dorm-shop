@@ -3,7 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface SaleRecord {
-    id: number;
+    id: string;
     date: string;
     items: string;
     total: number;

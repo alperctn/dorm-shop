@@ -26,5 +26,21 @@ export const dbServer = {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
         });
+    },
+
+    post: async (path: string, data: any) => {
+        if (!DB_URL) throw new Error("FIREBASE_DB_URL is not defined");
+        await fetch(`${DB_URL}${path}.json`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+    },
+
+    delete: async (path: string) => {
+        if (!DB_URL) throw new Error("FIREBASE_DB_URL is not defined");
+        await fetch(`${DB_URL}${path}.json`, {
+            method: "DELETE",
+        });
     }
 };
