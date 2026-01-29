@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: "Yurdun en hızlı marketi",
   manifest: "/manifest.json",
   themeColor: "#EAB308",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

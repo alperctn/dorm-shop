@@ -2,16 +2,33 @@ import { NextResponse } from "next/server";
 import { dbServer } from "@/lib/db-server";
 
 // Helper for Telegram
-async function sendTelegramMessage(message: string) {
+async function sendTelegramMessage(message: string, isInteractive: boolean = false, orderId: string = "") {
     const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
     const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
 
     if (!token || !chatId) return;
 
+    const body: any = {
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown"
+    };
+
+    if (isInteractive && orderId) {
+        body.reply_markup = {
+            inline_keyboard: [
+                [
+                    { text: "✅ Onayla", callback_data: `approve_${orderId}` },
+                    { text: "❌ Reddet", callback_data: `reject_${orderId}` }
+                ]
+            ]
+        };
+    }
+
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "Markdown" }),
+        body: JSON.stringify(body),
     });
 }
 
@@ -20,22 +37,21 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { items, deliveryMethod, roomNumber, paymentMethod, totalPrice } = body;
 
-        // 1. Fetch current stock (Source of Truth)
+        // 1. Fetch current stock
         const products = await dbServer.get("/products");
         if (!products) {
             return NextResponse.json({ error: "System error: Products not found" }, { status: 500 });
         }
 
-        // 2. Verify and Deduct Stock
+        // 2. Verify and Deduct Stock (Provisional Deduction)
         const updatedProducts = [...products];
 
         for (const item of items) {
             const productIndex = updatedProducts.findIndex((p: any) => p.id === item.id);
-            if (productIndex === -1) continue; // Should not happen
+            if (productIndex === -1) continue;
 
             const product = updatedProducts[productIndex];
 
-            // Critical Check
             if (product.stock < item.quantity) {
                 return NextResponse.json({
                     success: false,
@@ -43,19 +59,19 @@ export async function POST(request: Request) {
                 }, { status: 400 });
             }
 
-            // Deduct
             updatedProducts[productIndex] = {
                 ...product,
                 stock: product.stock - item.quantity
             };
         }
 
-        // 3. Save Updated Stock (Atomic-like operation for our scale)
+        // 3. Save Updated Stock
         await dbServer.put("/products", updatedProducts);
 
-        // 4. Calculate Profit & Save Sale Record
-        let totalProfit = 0;
+        // 4. Create Order Record (Status: Pending)
+        // We calculate details but don't add to "Sales" yet.
         let itemsSummary = "";
+        let totalProfit = 0;
 
         items.forEach((item: any) => {
             const product = updatedProducts.find((p: any) => p.id === item.id);
@@ -69,37 +85,38 @@ export async function POST(request: Request) {
 
         const deliveryFee = deliveryMethod === "delivery" ? items.reduce((sum: number, item: any) => sum + item.quantity, 0) * 5 : 0;
         const grandTotal = totalPrice + deliveryFee;
+        if (deliveryMethod === "delivery") totalProfit += deliveryFee;
 
-        // Delivery fee is pure profit (service)
-        if (deliveryMethod === "delivery") {
-            totalProfit += deliveryFee;
-        }
-
-        const saleRecord = {
-            id: Date.now().toString(),
+        const orderId = Date.now().toString();
+        const orderRecord = {
+            id: orderId,
+            status: "pending", // pending, approved, rejected
             date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
-            items: itemsSummary.slice(0, -2), // Remove trailing comma
+            items: items, // Keep full object for restore if needed
+            itemsSummary: itemsSummary.slice(0, -2),
             total: grandTotal,
             profit: totalProfit,
-            method: "telegram" // or "web"
+            deliveryMethod,
+            roomNumber,
+            paymentMethod
         };
 
-        await dbServer.post("/sales", saleRecord);
+        // Save to /orders
+        await dbServer.put(`/orders/${orderId}`, orderRecord);
 
-        // 5. Send Notification
-        let message = `*Yeni Sipariş!* 🛒\n\n`;
+        // 5. Send Notification with Buttons
+        let message = `*Yeni Sipariş Bekliyor!* ⏳\n\n`;
         items.forEach((item: any) => {
             message += `${item.quantity}x ${item.name}\n`;
         });
-        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL/ürün)' : 'Gel Al'}`;
+        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim' : 'Gel Al'}`;
         if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
         message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
         message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
-        message += `\n📈 *Net Kar:* ₺${totalProfit}`; // Admin convenience in Telegram
 
-        await sendTelegramMessage(message);
+        await sendTelegramMessage(message, true, orderId);
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, orderId });
 
     } catch (error: any) {
         console.error("Order Error:", error);

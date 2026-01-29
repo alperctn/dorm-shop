@@ -17,6 +17,7 @@ export default function AdminPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [revenue, setRevenue] = useState<{ total: number, totalProfit: number, history: SaleRecord[] }>({ total: 0, totalProfit: 0, history: [] });
     const [visitors, setVisitors] = useState<{ date: string, count: number }[]>([]);
+    const [orders, setOrders] = useState<any[]>([]); // New Order State
     // const [password, setPassword] = useState(""); // Removed
     const [categories, setCategories] = useState<Category[]>([]);
     // const [newCategoryName, setNewCategoryName] = useState(""); // Removed
@@ -129,6 +130,49 @@ export default function AdminPage() {
         window.dispatchEvent(new Event("storage"));
     };
 
+    // Order Management Logic
+    const fetchOrders = async () => {
+        try {
+            const res = await fetch("/api/admin/orders");
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Poll for orders
+    useEffect(() => {
+        fetchOrders();
+        const interval = setInterval(fetchOrders, 10000); // 10s active polling
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleOrderAction = async (orderId: string, action: "approve" | "reject") => {
+        if (!confirm(action === "approve" ? "Siparişi onaylıyor musun?" : "Siparişi reddetmek istediğine emin misin?")) return;
+
+        try {
+            const res = await fetch("/api/admin/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId, action })
+            });
+            if (res.ok) {
+                // Remove locally or re-fetch
+                fetchOrders();
+                // Also update revenue if approved
+                const revRes = await fetch("/api/revenue");
+                if (revRes.ok) setRevenue(await revRes.json());
+
+                alert(action === "approve" ? "Sipariş Onaylandı ✅" : "Sipariş Reddedildi ❌");
+            }
+        } catch (e) {
+            alert("İşlem başarısız");
+        }
+    };
+
     return (
         <div className="min-h-screen p-6 md:p-8">
             <header className="mb-8 flex justify-between items-center">
@@ -142,6 +186,53 @@ export default function AdminPage() {
                     </Link>
                 </div>
             </header>
+
+            {/* Active Orders Section (NEW) */}
+            <div className="glass-card p-6 mb-8 border-l-4 border-yellow-500">
+                <h2 className="text-xl font-bold mb-4 flex items-center justify-between">
+                    <span>🔔 Gelen Siparişler</span>
+                    <button onClick={fetchOrders} className="text-xs bg-zinc-800 p-2 rounded hover:bg-zinc-700">Yenile</button>
+                </h2>
+
+                {orders.filter(o => o.status === 'pending').length === 0 ? (
+                    <p className="text-zinc-500 text-sm">Bekleyen sipariş yok.</p>
+                ) : (
+                    <div className="space-y-4">
+                        {orders.filter(o => o.status === 'pending').map((order) => (
+                            <div key={order.id} className="bg-zinc-900/80 p-4 rounded-xl border border-yellow-500/30 flex flex-col md:flex-row justify-between gap-4 animate-pulse-slow">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="font-bold text-lg text-white">#{order.id.slice(-4)}</span>
+                                        <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded">Bekliyor</span>
+                                        <span className="text-xs text-zinc-500">{order.date.split(' ')[1]}</span>
+                                    </div>
+                                    <p className="text-zinc-300 text-sm mb-1">{order.itemsSummary}</p>
+                                    <div className="text-xs text-zinc-500 flex gap-3">
+                                        <span>🏠 {order.deliveryMethod === 'delivery' ? `Oda: ${order.roomNumber}` : 'Gel Al'}</span>
+                                        <span>💳 {order.paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}</span>
+                                    </div>
+                                    <div className="mt-2 font-bold text-green-400">₺{order.total}</div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleOrderAction(order.id, 'reject')}
+                                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-3 rounded-lg font-bold text-sm transition"
+                                    >
+                                        Reddet
+                                    </button>
+                                    <button
+                                        onClick={() => handleOrderAction(order.id, 'approve')}
+                                        className="bg-green-500 hover:bg-green-400 text-black px-6 py-3 rounded-lg font-bold text-sm transition shadow-lg shadow-green-500/20"
+                                    >
+                                        Onayla
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Revenue Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
