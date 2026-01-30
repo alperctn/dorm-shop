@@ -259,17 +259,27 @@ export default function AdminPage() {
                     </button>
                 </div>
 
+const VisitorChart = dynamic(() => import('@/components/VisitorChart'), {ssr: false });
+
+                // ... (in AdminPage structure) ...
+
                 <div className="glass-card p-6 border-l-4 border-blue-500 relative">
                     <h2 className="text-lg font-bold text-zinc-400 mb-2">Günlük Ziyaretçi</h2>
-                    <div className="text-4xl font-bold text-blue-400">
-                        {visitors.length > 0 ? visitors[0].count : 0}
-                        <span className="text-sm text-zinc-600 font-normal ml-2">Kişi</span>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-white/5">
-                        <h2 className="text-sm font-bold text-zinc-500 mb-1">Dün</h2>
-                        <div className="text-2xl font-bold text-zinc-500">
-                            {visitors.length > 1 ? visitors[1].count : 0}
+                    <div className="flex justify-between items-end mb-4">
+                        <div>
+                            <div className="text-4xl font-bold text-blue-400">
+                                {visitors.length > 0 ? visitors[0].count : 0}
+                                <span className="text-sm text-zinc-600 font-normal ml-2">Kişi (Bugün)</span>
+                            </div>
+                            <div className="text-sm text-zinc-500 mt-1">
+                                Dün: <span className="text-zinc-400 font-bold">{visitors.length > 1 ? visitors[1].count : 0}</span>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Visitor Graph */}
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <VisitorChart data={[...visitors].slice(0, 7).reverse()} />
                     </div>
                 </div>
 
