@@ -10,6 +10,7 @@ import { fetchCategories, Category } from "@/services/categoryService";
 import dynamic from 'next/dynamic';
 
 const AdminChart = dynamic(() => import('@/components/AdminChart'), { ssr: false });
+const VisitorChart = dynamic(() => import('@/components/VisitorChart'), { ssr: false });
 
 export default function AdminPage() {
     // const { user, loading } = useAuth();
@@ -259,9 +260,7 @@ export default function AdminPage() {
                     </button>
                 </div>
 
-const VisitorChart = dynamic(() => import('@/components/VisitorChart'), {ssr: false });
 
-                // ... (in AdminPage structure) ...
 
                 <div className="glass-card p-6 border-l-4 border-blue-500 relative">
                     <h2 className="text-lg font-bold text-zinc-400 mb-2">Günlük Ziyaretçi</h2>
