@@ -24,7 +24,8 @@ export default function LoginPage() {
         // Force reload /admin to pick up cookie
         window.location.href = "/admin";
       } else {
-        setError("Hatalı şifre!");
+        const data = await res.json();
+        setError(data.error || "Hatalı şifre!");
       }
 
     } catch (err: any) {

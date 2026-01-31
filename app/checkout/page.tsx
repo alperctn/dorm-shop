@@ -14,8 +14,8 @@ export default function CheckoutPage() {
     const [roomNumber, setRoomNumber] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // Ürün başına 5 TL getirme ücreti
-    const deliveryFee = deliveryMethod === "delivery" ? totalItems * 5 : 0;
+    // Sabit 5 TL teslimat ücreti (150 TL üzeri ücretsiz)
+    const deliveryFee = deliveryMethod === "delivery" ? (totalPrice >= 150 ? 0 : 5) : 0;
     const grandTotal = totalPrice + deliveryFee;
 
     const handleOrder = async () => {
@@ -85,7 +85,7 @@ export default function CheckoutPage() {
         items.forEach(item => {
             message += `${item.quantity}x ${item.name}\n`;
         });
-        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL/ürün)' : 'Gel Al'}`;
+        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL)' : 'Gel Al'}`;
         if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
         message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
         message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
@@ -174,7 +174,9 @@ export default function CheckoutPage() {
                         >
                             <span className="text-2xl">🚪</span>
                             <div className="text-sm font-bold">Odaya Teslim</div>
-                            <div className="text-[10px] opacity-70">+5 TL / Ürün</div>
+                            <div className="text-[10px] opacity-70">
+                                {totalPrice >= 150 ? <span className="text-green-400 font-bold">ÜCRETSİZ</span> : "+5 TL (Sabit)"}
+                            </div>
                         </button>
                     </div>
 
@@ -228,8 +230,8 @@ export default function CheckoutPage() {
                         </div>
                         {deliveryMethod === "delivery" && (
                             <div className="flex justify-between text-yellow-500">
-                                <span>Teslimat Ücreti ({totalItems} x 5₺)</span>
-                                <span>₺{deliveryFee}</span>
+                                <span>Teslimat Ücreti</span>
+                                <span>{deliveryFee === 0 ? "ÜCRETSİZ" : `₺${deliveryFee}`}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/5">

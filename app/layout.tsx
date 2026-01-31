@@ -6,6 +6,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { Search } from "@/components/Search";
 import { CartFab } from "@/components/CartFab";
 import { VisitorTracker } from "@/components/VisitorTracker";
+import MarqueeBanner from "@/components/MarqueeBanner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   title: "Yurt Shop",
   description: "Yurdun en hızlı marketi",
   manifest: "/manifest.json",
-  themeColor: "#EAB308",
+
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
@@ -29,6 +30,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#EAB308",
 };
 
 export default function RootLayout({
@@ -39,8 +41,11 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={`${inter.variable} font-sans antialiased`}>
+
+
         <AuthProvider>
           <CartProvider>
+            <MarqueeBanner />
             <VisitorTracker />
             <Search />
             {children}

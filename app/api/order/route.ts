@@ -83,7 +83,7 @@ export async function POST(request: Request) {
             }
         });
 
-        const deliveryFee = deliveryMethod === "delivery" ? items.reduce((sum: number, item: any) => sum + item.quantity, 0) * 5 : 0;
+        const deliveryFee = deliveryMethod === "delivery" ? (totalPrice >= 150 ? 0 : 5) : 0;
         const grandTotal = totalPrice + deliveryFee;
         if (deliveryMethod === "delivery") totalProfit += deliveryFee;
 
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         items.forEach((item: any) => {
             message += `${item.quantity}x ${item.name}\n`;
         });
-        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim' : 'Gel Al'}`;
+        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL)' : 'Gel Al'}`;
         if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
         message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
         message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
