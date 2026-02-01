@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "tr_TR",
     url: "https://dorm-shop.vercel.app",
-    title: "Yurt Shop | Kampüsün En Hızlısı",
+    title: "Yurt Shop | Yurdun En Hızlısı",
     description: "Yurdun en hızlı marketi. İçecek, yiyecek ve teknoloji ürünleri anında kapında.",
     siteName: "Yurt Shop",
     images: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Yurt Shop | Kampüsün En Hızlısı",
+    title: "Yurt Shop | Yurdun En Hızlısı",
     description: "Yurdun en hızlı marketi. İçecek, yiyecek ve teknoloji ürünleri anında kapında.",
     images: ["/icon.png"],
   },
