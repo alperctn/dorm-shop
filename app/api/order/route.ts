@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { dbServer } from "@/lib/db-server";
+import rateLimit from "@/lib/rate-limit";
+
+// Rate Limiter: 3 orders per minute per IP
+const limiter = rateLimit({
+    interval: 60 * 1000, // 60 seconds
+    uniqueTokenPerInterval: 500, // Max 500 unique IPs per minute
+});
 
 // Helper for Telegram
 async function sendTelegramMessage(message: string, isInteractive: boolean = false, orderId: string = "") {
@@ -34,6 +41,14 @@ async function sendTelegramMessage(message: string, isInteractive: boolean = fal
 
 export async function POST(request: Request) {
     try {
+        // 0. Rate Limiting Check
+        const ip = request.headers.get("x-forwarded-for") || "unknown";
+        try {
+            await limiter.check(new Response(), 3, ip); // Limit: 3 requests per IP
+        } catch {
+            return NextResponse.json({ error: "Çok hızlı sipariş veriyorsunuz! Lütfen 1 dakika bekleyin. ⏳" }, { status: 429 });
+        }
+
         const body = await request.json();
         const { items, deliveryMethod, roomNumber, paymentMethod, totalPrice } = body;
 
