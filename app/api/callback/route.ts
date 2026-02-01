@@ -49,13 +49,7 @@ export async function POST(request: Request) {
             // Process Logic
             let resultText = "";
             try {
-                if (action === "login") {
-                    // Logic for Login Approval (Data format: "login_approve_ID" -> split gives ["login", "approve", "ID"])
-                    // But we structure it as: action="login", subAction="approve", id=...
-                    // Wait, callback data was: `login_approve_${requestId}`
-                    // The split above `const [action, orderId] = data.split("_");` might be too simple now.
-                    // Let's re-parse properly.
-                }
+
 
                 // Re-parsing to support multiple types of callbacks
                 const parts = data.split("_");
