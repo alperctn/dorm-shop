@@ -64,7 +64,11 @@ export default function CheckoutPage() {
 
             addSale(grandTotal, finalProfit, itemsSummary, "telegram");
 
-            alert("Siparişiniz alındı! 🚀\nOdanıza doğru yola çıkıyoruz.");
+            if (deliveryMethod === "pickup") {
+                alert("Siparişiniz alındı! 🚀\nE21 Numaralı Odadan Teslim Alabilirsiniz.");
+            } else {
+                alert("Siparişiniz alındı! 🚀\nOdanıza doğru yola çıkıyoruz.");
+            }
             clearCart();
             router.push("/");
         } catch (error: any) {

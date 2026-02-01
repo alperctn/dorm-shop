@@ -7,6 +7,7 @@ import { Search } from "@/components/Search";
 import { CartFab } from "@/components/CartFab";
 import { VisitorTracker } from "@/components/VisitorTracker";
 import MarqueeBanner from "@/components/MarqueeBanner";
+import { HeaderControls } from "@/components/HeaderControls";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -39,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
+    <html lang="tr" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
 
 
@@ -47,6 +48,7 @@ export default function RootLayout({
           <CartProvider>
             <MarqueeBanner />
             <VisitorTracker />
+            <HeaderControls />
             <Search />
             {children}
             <CartFab />

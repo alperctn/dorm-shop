@@ -7,8 +7,6 @@ export function middleware(request: NextRequest) {
         const adminSession = request.cookies.get("admin_session");
 
         // Cookie yoksa veya değeri yanlışsa login'e at
-        // Not: Gerçek hayatta burada JWT veya şifreli token kontrol edilir.
-        // Şimdilik basit bir "secret_token" kontrolü yapıyoruz.
         if (!adminSession || adminSession.value !== "secure_admin_token_123") {
             return NextResponse.redirect(new URL("/login", request.url));
         }

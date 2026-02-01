@@ -34,24 +34,23 @@ export default function Home() {
   /* Dükkan Durumu */
   const [isShopOpen, setIsShopOpen] = useState(true);
 
-  // Bu useEffect component mount olduğunda çalışır
   useEffect(() => {
-    // 1. İlk yüklemede değeri oku
-    const checkStatus = () => {
-      const savedStatus = localStorage.getItem("isShopOpen");
-      if (savedStatus !== null) {
-        setIsShopOpen(JSON.parse(savedStatus));
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("/api/status");
+        if (res.ok) {
+          const data = await res.json();
+          setIsShopOpen(data.isOpen);
+        }
+      } catch (e) {
+        console.error(e);
       }
     };
-    checkStatus();
+    fetchStatus();
 
-    // 2. Başka sekmede/sayfada değişirse dinle (window.dispatchEvent(new Event("storage")))
-    const handleStorageChange = () => checkStatus();
-
-    // Custom event dinleyicisi ekle (Aynı sekmedeki değişimler için)
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => window.removeEventListener("storage", handleStorageChange);
+    // Poll for status changes every 10 seconds to keep clients in sync
+    const interval = setInterval(fetchStatus, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -60,14 +59,7 @@ export default function Home() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Admin Link (Top Right) */}
-      <Link
-        href="/admin"
-        className="absolute top-4 right-4 z-50 p-2 text-zinc-700 hover:text-primary transition-colors opacity-50 hover:opacity-100"
-        title="Yönetici Paneli"
-      >
-        🔐
-      </Link>
+
 
       <div className="max-w-4xl w-full relative z-10">
         <header className="text-center mb-12">

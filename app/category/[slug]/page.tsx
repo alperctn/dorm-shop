@@ -13,6 +13,8 @@ export default function CategoryPage() {
 
     const [products, setProducts] = useState<Product[]>([]);
 
+    const [isShopOpen, setIsShopOpen] = useState(true);
+
     useEffect(() => {
         const loadProducts = async () => {
             const allProducts = await fetchProducts();
@@ -22,9 +24,19 @@ export default function CategoryPage() {
             }
         };
 
-        loadProducts();
+        const fetchStatus = async () => {
+            try {
+                const res = await fetch("/api/status");
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsShopOpen(data.isOpen);
+                }
+            } catch (e) { console.error(e); }
+        };
 
-        // Listen for updates (if admin changes stock/products in another tab)
+        loadProducts();
+        fetchStatus();
+
         window.addEventListener("product-storage", loadProducts);
         return () => window.removeEventListener("product-storage", loadProducts);
     }, [slug]);
@@ -90,7 +102,7 @@ export default function CategoryPage() {
                                             </div>
 
                                             {product.stock > 0 ? (
-                                                <AddToCartButton product={product} />
+                                                <AddToCartButton product={product} isShopOpen={isShopOpen} />
                                             ) : (
                                                 <div className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-zinc-500">
                                                     Tükendi
@@ -116,9 +128,17 @@ export default function CategoryPage() {
     );
 }
 
-function AddToCartButton({ product }: { product: any }) {
+function AddToCartButton({ product, isShopOpen }: { product: any, isShopOpen: boolean }) {
     const { addToCart, items } = useCart();
     const [added, setAdded] = useState(false);
+
+    if (!isShopOpen) {
+        return (
+            <button disabled className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/20 text-red-500 cursor-not-allowed">
+                Satış Yok
+            </button>
+        );
+    }
 
     const handleAdd = () => {
         addToCart(product);

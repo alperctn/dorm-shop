@@ -10,6 +10,7 @@ export function Search() {
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isShopOpen, setIsShopOpen] = useState(true);
 
     // Sepet fonksiyonları
     const { addToCart, items } = useCart();
@@ -31,6 +32,21 @@ export function Search() {
         };
         load();
     }, []);
+
+    const handleOpen = async () => {
+        setIsOpen(true);
+        const data = await fetchProducts();
+        setProducts(data);
+
+        // Fetch Shop Status
+        try {
+            const res = await fetch("/api/status");
+            if (res.ok) {
+                const statusData = await res.json();
+                setIsShopOpen(statusData.isOpen);
+            }
+        } catch (e) { console.error(e); }
+    };
 
     // Arama filtreleme
     useEffect(() => {
@@ -57,7 +73,7 @@ export function Search() {
             {/* Arama Butonu (Tetikleyici) */}
             <button
                 onClick={handleOpen}
-                className="fixed top-4 left-4 z-40 bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 p-3 rounded-full hover:bg-zinc-800 hover:text-white transition shadow-lg group"
+                className="absolute top-14 left-4 z-40 bg-zinc-900/80 backdrop-blur-md border border-white/10 text-zinc-300 p-3 rounded-full hover:bg-zinc-800 hover:text-white transition shadow-lg group"
                 title="Ürün Ara"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +126,7 @@ export function Search() {
                             ) : (
                                 <div className="grid gap-2">
                                     {filteredProducts.map(product => (
-                                        <SearchResultItem key={product.id} product={product} />
+                                        <SearchResultItem key={product.id} product={product} isShopOpen={isShopOpen} />
                                     ))}
                                 </div>
                             )}
@@ -122,7 +138,7 @@ export function Search() {
     );
 }
 
-function SearchResultItem({ product }: { product: Product }) {
+function SearchResultItem({ product, isShopOpen }: { product: Product, isShopOpen: boolean }) {
     const { addToCart, items } = useCart();
     const [added, setAdded] = useState(false);
 
@@ -131,7 +147,7 @@ function SearchResultItem({ product }: { product: Product }) {
 
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (isOutOfStock) return;
+        if (isOutOfStock || !isShopOpen) return;
         addToCart(product);
         setAdded(true);
         setTimeout(() => setAdded(false), 500);
@@ -158,15 +174,17 @@ function SearchResultItem({ product }: { product: Product }) {
 
             <button
                 onClick={handleAdd}
-                disabled={isOutOfStock}
+                disabled={isOutOfStock || !isShopOpen}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition ${isOutOfStock
                     ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                    : added
-                        ? 'bg-green-500 text-white'
-                        : 'bg-primary text-primary-foreground group-hover:scale-105'
+                    : !isShopOpen
+                        ? 'bg-red-500/10 text-red-500 cursor-not-allowed'
+                        : added
+                            ? 'bg-green-500 text-white'
+                            : 'bg-primary text-primary-foreground group-hover:scale-105'
                     }`}
             >
-                {isOutOfStock ? "Tükendi" : added ? "Eklendi" : (quantityInCart > 0 ? `Ekle (+${quantityInCart})` : "Ekle")}
+                {isOutOfStock ? "Tükendi" : !isShopOpen ? "Kapalı" : added ? "Eklendi" : (quantityInCart > 0 ? `Ekle (+${quantityInCart})` : "Ekle")}
             </button>
         </div>
     );
