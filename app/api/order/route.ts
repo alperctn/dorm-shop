@@ -125,7 +125,7 @@ export async function POST(request: Request) {
 
         if (deliveryMethod === "delivery") totalProfit += deliveryFee;
 
-        const orderId = Date.now().toString();
+        const orderId = crypto.randomUUID();
         const orderRecord = {
             id: orderId,
             status: "pending", // pending, approved, rejected
