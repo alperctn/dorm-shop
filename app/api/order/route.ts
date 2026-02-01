@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbServer } from "@/lib/db-server";
 import rateLimit from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Rate Limiter: 3 orders per minute per IP
 const limiter = rateLimit({
@@ -13,7 +14,10 @@ async function sendTelegramMessage(message: string, isInteractive: boolean = fal
     const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
     const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
 
-    if (!token || !chatId) return;
+    if (!token || !chatId) {
+        logger.error("Telegram tokens missing in env");
+        return;
+    }
 
     const body: any = {
         chat_id: chatId,
@@ -32,11 +36,15 @@ async function sendTelegramMessage(message: string, isInteractive: boolean = fal
         };
     }
 
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
+    try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+    } catch (e) {
+        logger.error("Failed to send Telegram message", { error: e });
+    }
 }
 
 export async function POST(request: Request) {
@@ -46,6 +54,7 @@ export async function POST(request: Request) {
         try {
             await limiter.check(new Response(), 3, ip); // Limit: 3 requests per IP
         } catch {
+            logger.warn("Rate limit exceeded", { ip });
             return NextResponse.json({ error: "Çok hızlı sipariş veriyorsunuz! Lütfen 1 dakika bekleyin. ⏳" }, { status: 429 });
         }
 
@@ -55,6 +64,7 @@ export async function POST(request: Request) {
         // 1. Fetch current stock
         const products = await dbServer.get("/products");
         if (!products) {
+            logger.critical("Database connection failed or products missing");
             return NextResponse.json({ error: "System error: Products not found" }, { status: 500 });
         }
 
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
             const product = updatedProducts[productIndex];
 
             if (product.stock < item.quantity) {
+                logger.warn("Stock mismatch during order", { item: item.name, stock: product.stock, requested: item.quantity });
                 return NextResponse.json({
                     success: false,
                     error: `${product.name} stokta kalmadı! (Kalan: ${product.stock})`
@@ -131,10 +142,11 @@ export async function POST(request: Request) {
 
         await sendTelegramMessage(message, true, orderId);
 
+        logger.info("New order created", { orderId, total: grandTotal });
         return NextResponse.json({ success: true, orderId });
 
     } catch (error: any) {
-        console.error("Order Error:", error);
+        logger.error("Order Critical Error", { error: error.message, stack: error.stack });
         return NextResponse.json({ error: error.message || "Order failed" }, { status: 500 });
     }
 }
