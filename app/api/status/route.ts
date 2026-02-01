@@ -12,6 +12,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    // 1. Authenticate (Admin Only)
+    const cookieStore = await cookies();
+    const adminSession = cookieStore.get("admin_session");
+    if (!adminSession?.value) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         const { isOpen } = await request.json();
         await dbServer.put("/shopStatus", isOpen);
