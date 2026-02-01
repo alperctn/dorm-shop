@@ -98,19 +98,31 @@ export async function POST(request: Request) {
         // We calculate details but don't add to "Sales" yet.
         let itemsSummary = "";
         let totalProfit = 0;
+        let serverCalculatedTotal = 0;
 
         items.forEach((item: any) => {
             const product = updatedProducts.find((p: any) => p.id === item.id);
             if (product) {
                 const cost = product.costPrice || 0;
                 const profitPerItem = product.price - cost;
+
+                // Server-side price calculation
+                serverCalculatedTotal += product.price * item.quantity;
                 totalProfit += profitPerItem * item.quantity;
+
                 itemsSummary += `${item.quantity}x ${product.name}, `;
             }
         });
 
-        const deliveryFee = deliveryMethod === "delivery" ? (totalPrice >= 150 ? 0 : 5) : 0;
-        const grandTotal = totalPrice + deliveryFee;
+        // Delivery Fee Logic
+        const deliveryFee = deliveryMethod === "delivery" ? (serverCalculatedTotal >= 150 ? 0 : 5) : 0;
+        const grandTotal = serverCalculatedTotal + deliveryFee;
+
+        // Verify if client total was wildly different (Optional: specific security alert)
+        if (Math.abs(grandTotal - totalPrice) > 1) {
+            logger.warn("Price Manipulation Attempt", { clientTotal: totalPrice, serverTotal: grandTotal, ip });
+        }
+
         if (deliveryMethod === "delivery") totalProfit += deliveryFee;
 
         const orderId = Date.now().toString();
@@ -120,7 +132,7 @@ export async function POST(request: Request) {
             date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
             items: items, // Keep full object for restore if needed
             itemsSummary: itemsSummary.slice(0, -2),
-            total: grandTotal,
+            total: grandTotal, // Use the SAFE server-calculated total
             profit: totalProfit,
             deliveryMethod,
             roomNumber,
