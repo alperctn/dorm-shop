@@ -45,11 +45,18 @@ const nextConfig = {
     },
 };
 
-const withPWA = require("next-pwa")({
-    dest: "public",
-    disable: process.env.NODE_ENV === "development",
-    register: true,
-    skipWaiting: true,
-});
+// Safe PWA Loader
+let withPWA;
+try {
+    withPWA = require("next-pwa")({
+        dest: "public",
+        disable: process.env.NODE_ENV === "development",
+        register: true,
+        skipWaiting: true,
+    });
+} catch (e) {
+    console.warn("⚠️ next-pwa not installed. PWA features disabled.");
+    withPWA = (config) => config;
+}
 
 module.exports = withPWA(nextConfig);
