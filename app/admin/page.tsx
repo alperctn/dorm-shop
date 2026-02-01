@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 
 const AdminChart = dynamic(() => import('@/components/AdminChart'), { ssr: false });
 const HourlySalesChart = dynamic(() => import('@/components/HourlySalesChart'), { ssr: false });
+const VisitorChart = dynamic(() => import('@/components/VisitorChart'), { ssr: false });
 
 export default function AdminPage() {
     // const { user, loading } = useAuth();
