@@ -24,35 +24,51 @@ export default function PrintPage() {
                 </header>
 
                 <div className="glass-card p-6 space-y-6">
-                    <div className="bg-zinc-900/50 p-4 rounded-xl text-left space-y-2">
-                        <div className="flex items-center gap-3">
-                            <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">1</span>
-                            <span className="text-sm">Aşağıdaki butona tıkla.</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">2</span>
-                            <span className="text-sm">WhatsApp sohbeti açılacak.</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">3</span>
-                            <span className="text-sm">Dosyanı (PDF/Fotoğraf) sohbete ekle ve gönder!</span>
-                        </div>
+                    <div className="flex items-center gap-3">
+                        <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">1</span>
+                        <span className="text-sm">Aşağıdaki butona tıkla.</span>
                     </div>
-
-                    <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-[#25D366] text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/20 hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"
-                    >
-                        <span>📱</span> WhatsApp ile Gönder
-                    </a>
+                    <div className="flex items-center gap-3">
+                        <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">2</span>
+                        <span className="text-sm">WhatsApp sohbeti açılacak.</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="bg-zinc-800 w-8 h-8 flex items-center justify-center rounded-full text-sm">3</span>
+                        <span className="text-sm">Dosyanı (PDF/Fotoğraf) sohbete ekle ve gönder!</span>
+                    </div>
                 </div>
 
-                <Link href="/" className="inline-block text-sm text-zinc-500 hover:text-white transition">
-                    &larr; Ana Sayfaya Dön
-                </Link>
+                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-left">
+                    <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2">
+                        <span>🛡️</span> Güvenlik Uyarısı
+                    </h3>
+                    <p className="text-xs text-zinc-400 mb-2">
+                        Sistem güvenliği için sadece aşağıdaki formatlar kabul edilir:
+                    </p>
+                    <ul className="text-xs text-zinc-300 list-disc list-inside space-y-1">
+                        <li>✅ PDF Dosyaları (.pdf)</li>
+                        <li>✅ Word Belgeleri (.doc, .docx)</li>
+                        <li>✅ Fotoğraflar (.jpg, .png, .jpeg)</li>
+                    </ul>
+                    <p className="text-xs text-red-500 mt-2 font-bold">
+                        ⚠️ .EXE, .BAT veya .ZIP dosyaları kesinlikle açılmaz ve silinir.
+                    </p>
+                </div>
+
+                <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-[#25D366] text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/20 hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"
+                >
+                    <span>📱</span> WhatsApp ile Gönder
+                </a>
             </div>
-        </main>
+
+            <Link href="/" className="inline-block text-sm text-zinc-500 hover:text-white transition">
+                &larr; Ana Sayfaya Dön
+            </Link>
+        </div>
+        </main >
     );
 }
