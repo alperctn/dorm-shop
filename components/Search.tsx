@@ -62,7 +62,6 @@ export function Search() {
         setFilteredProducts(results);
     }, [query, products]);
 
-    const handleOpen = () => setIsOpen(true);
     const handleClose = () => {
         setIsOpen(false);
         setQuery("");
