@@ -155,12 +155,30 @@ function RequestForm() {
     if (!request.trim()) return;
 
     setSending(true);
-    const message = `📣 *Yeni İstek Var!*\n\n👉 ${request}`;
+
+    // XSS & Markdown Injection Protection
+    const sanitizeInput = (str: string) => {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        // Escape Telegram Markdown special chars to prevent broken messages
+        .replace(/_/g, "\\_")
+        .replace(/\*/g, "\\*")
+        .replace(/\[/g, "\\[")
+        .replace(/`/g, "\\`");
+    };
+
+    const safeRequest = sanitizeInput(request);
+    const message = `📣 *Yeni İstek Var!*\n\n👉 ${safeRequest}`;
 
     // Profanity Check (YENİ)
     const lowerRequest = request.toLowerCase();
     if (lowerRequest.includes("sakso") || lowerRequest.includes("31")) {
       alert("ne diyorsun terbiyesiz herif");
+      setSending(false);
       return;
     }
 
