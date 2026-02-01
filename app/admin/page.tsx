@@ -10,7 +10,7 @@ import { fetchCategories, Category } from "@/services/categoryService";
 import dynamic from 'next/dynamic';
 
 const AdminChart = dynamic(() => import('@/components/AdminChart'), { ssr: false });
-const VisitorChart = dynamic(() => import('@/components/VisitorChart'), { ssr: false });
+const HourlySalesChart = dynamic(() => import('@/components/HourlySalesChart'), { ssr: false });
 
 export default function AdminPage() {
     // const { user, loading } = useAuth();
@@ -19,15 +19,11 @@ export default function AdminPage() {
     const [revenue, setRevenue] = useState<{ total: number, totalProfit: number, history: SaleRecord[] }>({ total: 0, totalProfit: 0, history: [] });
     const [visitors, setVisitors] = useState<{ date: string, count: number }[]>([]);
     const [orders, setOrders] = useState<any[]>([]); // New Order State
-    // const [password, setPassword] = useState(""); // Removed
     const [categories, setCategories] = useState<Category[]>([]);
-    // const [newCategoryName, setNewCategoryName] = useState(""); // Removed
     const [newProduct, setNewProduct] = useState({ name: "", price: "", costPrice: "", stock: "", category: "", imageUrl: "" });
     const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State for editing
-
-    // Protect the route
-    // Middleware handles security, but we can double check cookie presence if needed
-    // For now, let's trust middleware redirect.
+    const [hourlyData, setHourlyData] = useState<{ hour: string, count: number }[]>([]);
+    const [isShopOpen, setIsShopOpen] = useState(true);
 
     // Load products and categories on mount
     useEffect(() => {
@@ -63,15 +59,48 @@ export default function AdminPage() {
             } catch (err) {
                 console.error("Visit fetch error", err);
             }
+
+            // Fetch Hourly Sales Heatmap
+            try {
+                const mapRes = await fetch("/api/sales");
+                if (mapRes.ok) {
+                    const mapData = await mapRes.json();
+                    setHourlyData(mapData);
+                }
+            } catch (e) { console.error("Heatmap fetch error", e); }
         };
         load();
     }, []);
 
-    // Internal login handler removed
+    // Shop Status
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const res = await fetch("/api/status");
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsShopOpen(data.isOpen);
+                }
+            } catch (e) {
+                console.error("Status fetch error", e);
+            }
+        };
+        fetchStatus();
+    }, []);
 
-    // Internal login handler removed
-
-    /* Dükkan Durumu Yönetimi */
+    const toggleShopStatus = async (status: boolean) => {
+        setIsShopOpen(status); // Optimistic update
+        try {
+            await fetch("/api/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isOpen: status })
+            });
+        } catch (e) {
+            console.error("Status update error", e);
+            alert("Durum güncellenemedi!");
+        }
+    };
 
     const handleStockChange = async (id: number, newStock: string) => {
         const stockVal = parseInt(newStock);
@@ -124,40 +153,6 @@ export default function AdminPage() {
         alert("Ürün güncellendi! ✅");
     };
 
-    // Category management handlers removed
-
-    /* Dükkan Durumu Yönetimi */
-    const [isShopOpen, setIsShopOpen] = useState(true);
-
-    useEffect(() => {
-        const fetchStatus = async () => {
-            try {
-                const res = await fetch("/api/status");
-                if (res.ok) {
-                    const data = await res.json();
-                    setIsShopOpen(data.isOpen);
-                }
-            } catch (e) {
-                console.error("Status fetch error", e);
-            }
-        };
-        fetchStatus();
-    }, []);
-
-    const toggleShopStatus = async (status: boolean) => {
-        setIsShopOpen(status); // Optimistic update
-        try {
-            await fetch("/api/status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ isOpen: status })
-            });
-        } catch (e) {
-            console.error("Status update error", e);
-            alert("Durum güncellenemedi!");
-        }
-    };
-
     // Order Management Logic
     const fetchOrders = async () => {
         try {
@@ -193,6 +188,9 @@ export default function AdminPage() {
                 // Also update revenue if approved
                 const revRes = await fetch("/api/revenue");
                 if (revRes.ok) setRevenue(await revRes.json());
+                // Also update heatmap
+                const mapRes = await fetch("/api/sales");
+                if (mapRes.ok) setHourlyData(await mapRes.json());
 
                 alert(action === "approve" ? "Sipariş Onaylandı ✅" : "Sipariş Reddedildi ❌");
             }
@@ -307,6 +305,14 @@ export default function AdminPage() {
                     <div className="mt-4 pt-4 border-t border-white/5">
                         <VisitorChart data={[...visitors].slice(0, 7).reverse()} />
                     </div>
+                </div>
+
+                {/* Heatmap Section */}
+                <div className="glass-card p-6 md:col-span-2">
+                    <h2 className="text-lg font-bold text-zinc-400 mb-4 flex items-center gap-2">
+                        🔥 Satış Yoğunluğu (Saatlik)
+                    </h2>
+                    <HourlySalesChart data={hourlyData} />
                 </div>
 
                 {/* Chart Section */}
