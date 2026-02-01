@@ -1,4 +1,4 @@
-import { db } from "./db";
+
 
 export interface Product {
     id: number;
