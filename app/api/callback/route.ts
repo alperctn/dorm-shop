@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbServer } from "@/lib/db-server";
 
-// Reusing logic from Admin API roughly, but optimized for single webhook event
+// Helper to handle order actions
 async function processOrderAction(orderId: string, action: "approve" | "reject") {
+    if (!orderId) return "INVALID_ID";
     const order = await dbServer.get(`/orders/${orderId}`);
-    if (!order) throw new Error("Order not found");
+    if (!order) return "ORDER_NOT_FOUND";
     if (order.status !== "pending") return "ALREADY_PROCESSED";
 
     if (action === "approve") {
@@ -20,16 +21,18 @@ async function processOrderAction(orderId: string, action: "approve" | "reject")
         await dbServer.patch(`/orders/${orderId}`, { status: "approved" });
         return "APPROVED";
     } else {
-        // Restore stock
+        // Restore stock logic...
         const products = await dbServer.get("/products");
-        const updatedProducts = [...products];
-        for (const item of order.items) {
-            const pIndex = updatedProducts.findIndex((p: any) => p.id === item.id);
-            if (pIndex !== -1) {
-                updatedProducts[pIndex].stock += item.quantity;
+        if (products && Array.isArray(products)) {
+            const updatedProducts = [...products];
+            for (const item of order.items) {
+                const pIndex = updatedProducts.findIndex((p: any) => p.id === item.id);
+                if (pIndex !== -1) {
+                    updatedProducts[pIndex].stock += item.quantity;
+                }
             }
+            await dbServer.put("/products", updatedProducts);
         }
-        await dbServer.put("/products", updatedProducts);
         await dbServer.patch(`/orders/${orderId}`, { status: "rejected" });
         return "REJECTED";
     }
@@ -39,74 +42,88 @@ export async function POST(request: Request) {
     try {
         const update = await request.json();
 
-        // Check if this is a callback query (Button click)
-        if (update.callback_query) {
-            const callbackQuery = update.callback_query;
-            const data = callbackQuery.data; // e.g., "approve_1738123123"
-            const chatId = callbackQuery.message.chat.id;
-            const messageId = callbackQuery.message.message_id;
+        // 1. Validate Callback Query
+        if (!update || !update.callback_query) {
+            return NextResponse.json({ success: true }); // Ignore non-callback
+        }
 
-            // Process Logic
-            let resultText = "";
-            try {
+        const callbackQuery = update.callback_query;
+        const data = callbackQuery.data; // "login_approve_ID" or "approve_ORDERID"
+        const message = callbackQuery.message;
 
+        // Safety checks
+        if (!data || !message || !message.chat) {
+            return NextResponse.json({ success: true });
+        }
 
-                // Re-parsing to support multiple types of callbacks
-                const parts = data.split("_");
-                const type = parts[0]; // "approve" (order) or "login"
+        const chatId = message.chat.id;
+        const messageId = message.message_id;
 
-                if (type === "login") {
-                    const subAction = parts[1]; // "approve" or "reject"
-                    const reqId = parts[2];
+        // 2. Parse Data
+        // Supported formats:
+        // A) "login_approve_<UUID>"
+        // B) "approve_<ORDERID>"
 
-                    const path = `/security/pending_logins/${reqId}`;
-                    const pendingInfo = await dbServer.get(path);
+        const parts = data.split("_");
+        let resultText = "⚠️ İşlem anlaşılamadı.";
 
-                    if (!pendingInfo) {
-                        resultText = "⚠️ İstek zaman aşımına uğradı veya bulunamadı.";
-                    } else if (pendingInfo.status !== "pending") {
-                        resultText = "⚠️ Bu işlem zaten yapılmış.";
+        try {
+            if (parts[0] === "login") {
+                // Login Flow
+                const action = parts[1]; // "approve" | "reject"
+                const reqId = parts.slice(2).join("_"); // Safe join in case UUID has weird chars (unlikely)
+
+                const path = `/security/pending_logins/${reqId}`;
+                const pendingInfo = await dbServer.get(path);
+
+                if (!pendingInfo) {
+                    resultText = "⚠️ İstek bulunamadı (Zaman aşımı).";
+                } else if (pendingInfo.status !== "pending") {
+                    resultText = `⚠️ Bu işlem zaten yapılmış (${pendingInfo.status}).`;
+                } else {
+                    if (action === "approve") {
+                        await dbServer.patch(path, { status: "approved" });
+                        resultText = "✅ Giriş Onaylandı! Yönlendiriliyor...";
                     } else {
-                        if (subAction === "approve") {
-                            await dbServer.patch(path, { status: "approved" });
-                            resultText = "✅ Giriş Onaylandı!";
-                        } else {
-                            await dbServer.patch(path, { status: "rejected" });
-                            resultText = "❌ Giriş Reddedildi.";
-                        }
+                        await dbServer.patch(path, { status: "rejected" });
+                        resultText = "❌ Giriş Reddedildi.";
                     }
                 }
-                else {
-                    // Legacy Order Logic (Assuming format "approve_ORDERID")
-                    // parts[0] is action, parts[1] is orderId
-                    const ordAction = parts[0] as "approve" | "reject";
-                    const ordId = parts[1];
-                    const result = await processOrderAction(ordId, ordAction);
 
-                    if (result === "APPROVED") resultText = "✅ Sipariş Onaylandı!";
-                    else if (result === "REJECTED") resultText = "❌ Sipariş Reddedildi.";
-                    else if (result === "ALREADY_PROCESSED") resultText = "⚠️ Bu işlem zaten yapılmış.";
+            } else {
+                // Order Flow (Legacy or Current)
+                const action = parts[0] as "approve" | "reject";
+                const orderId = parts.slice(1).join("_");
+
+                if (action === "approve" || action === "reject") {
+                    const hookResult = await processOrderAction(orderId, action);
+                    if (hookResult === "APPROVED") resultText = "✅ Sipariş Onaylandı!";
+                    else if (hookResult === "REJECTED") resultText = "❌ Sipariş Reddedildi.";
+                    else if (hookResult === "ALREADY_PROCESSED") resultText = "⚠️ Zaten işlem yapılmış.";
+                    else resultText = "⚠️ Sipariş bulunamadı.";
                 }
-
-            } catch (e) {
-                console.error(e);
-                resultText = "⚠️ Hata oluştu.";
             }
+        } catch (logicError) {
+            console.error("Logic Error:", logicError);
+            resultText = "⚠️ Sunucu hatası oluştu.";
+        }
 
-            // Update Telegram Message (Remove buttons, show result)
-            const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+        // 3. Update Telegram Message
+        const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+        if (token) {
+            // Edit Message (remove buttons)
             await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     chat_id: chatId,
                     message_id: messageId,
-                    text: `${callbackQuery.message.text}\n\n${resultText}`,
+                    text: `${message.text}\n\n${resultText}`,
                     parse_mode: "Markdown"
                 })
             });
 
-            // Answer Callback (Stop loading spinner on button)
+            // Answer Callback (stop spinner)
             await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -118,8 +135,9 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ success: true });
+
     } catch (error) {
-        console.error("Webhook Error:", error);
+        console.error("Webhook Critical Error:", error);
         return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
     }
 }
