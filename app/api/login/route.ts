@@ -55,6 +55,8 @@ export async function POST(request: Request) {
                 name: "admin_session",
                 value: "secure_admin_token_123", // In prod use a real JWT
                 httpOnly: true,
+                secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+                sameSite: "strict", // CSRF Protection (Strict)
                 maxAge: 60 * 60 * 24, // 1 Day
                 path: "/",
             });
