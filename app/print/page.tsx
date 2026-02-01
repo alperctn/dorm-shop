@@ -68,7 +68,6 @@ export default function PrintPage() {
             <Link href="/" className="inline-block text-sm text-zinc-500 hover:text-white transition">
                 &larr; Ana Sayfaya Dön
             </Link>
-        </div>
-        </main >
+        </main>
     );
 }
