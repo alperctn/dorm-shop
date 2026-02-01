@@ -43,6 +43,9 @@ export async function POST(request: Request) {
         if (update.callback_query) {
             const callbackQuery = update.callback_query;
             const data = callbackQuery.data; // e.g., "approve_1738123123"
+            const chatId = callbackQuery.message.chat.id;
+            const messageId = callbackQuery.message.message_id;
+
             // Process Logic
             let resultText = "";
             try {
