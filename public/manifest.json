@@ -3,6 +3,8 @@
   "short_name": "YurtShop",
   "description": "Yurdun en hızlı marketi.",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#EAB308",
