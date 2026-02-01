@@ -29,43 +29,38 @@ export async function POST(request: Request) {
             // Success: Reset Rate Limit Attempts
             await dbServer.put(attemptsPath, { count: 0, lockoutUntil: 0 });
 
-            // 2FA Initiation
-            const requestId = crypto.randomUUID();
+            // Notification (No 2FA blocking)
             const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
             const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
 
-            // 1. Store Pending Request in Redis/Firebase
-            await dbServer.put(`/security/pending_logins/${requestId}`, {
-                status: "pending",
-                ip: ip, // Use the raw IP for display
-                timestamp: Date.now()
-            });
-
-            // 2. Send Telegram Approval Message
             if (token && chatId) {
-                const message = `🛡️ *Admin Giriş Onayı* 🛡️\n\n🔑 *Denenen Şifre:* Doğru ✅\n🌍 *IP:* ${ip}\n🕒 *Zaman:* ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}`;
+                const message = `🔔 *Yeni Admin Girişi!* ✅\n\n🔑 *Durum:* Şifre Doğru, Giriş Yapıldı.\n🌍 *IP:* ${ip}\n🕒 *Zaman:* ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}`;
 
-                await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                // Fire and forget - don't await blocking the login
+                fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         chat_id: chatId,
                         text: message,
-                        parse_mode: "Markdown",
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: "✅ Onayla", callback_data: `login_approve_${requestId}` },
-                                    { text: "❌ Reddet", callback_data: `login_reject_${requestId}` }
-                                ]
-                            ]
-                        }
+                        parse_mode: "Markdown"
                     }),
-                }).catch(err => console.error("Telegram 2FA send failed", err));
+                }).catch(err => console.error("Telegram notification failed", err));
             }
 
-            // 3. Return Request ID to Client (Don't set cookie yet)
-            return NextResponse.json({ success: true, requires2FA: true, requestId });
+            // Set Session Cookie Directly
+            const response = NextResponse.json({ success: true, requires2FA: false });
+
+            response.cookies.set({
+                name: "admin_session",
+                value: "secure_admin_token_123", // In prod use a real JWT
+                httpOnly: true,
+                maxAge: 60 * 60 * 24, // 1 Day
+                path: "/",
+            });
+
+            return response;
+
         } else {
             // Failure: Increment Attempts
             const newCount = attemptData.count + 1;
@@ -77,8 +72,7 @@ export async function POST(request: Request) {
 
             await dbServer.put(attemptsPath, { count: newCount, lockoutUntil });
 
-            // Telegram Alert (Existing)
-
+            // Telegram Alert (Failure)
             const token = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
             const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID;
 
@@ -86,7 +80,7 @@ export async function POST(request: Request) {
                 const ip = request.headers.get("x-forwarded-for") || "Bilinmiyor";
                 const message = `⚠️ *Hatalı Admin Girişi!* 🚫\n\n🔑 *Denenen Şifre:* \`${password}\`\n🌍 *IP Adresi:* ${ip}\n🕒 *Zaman:* ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}`;
 
-                await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

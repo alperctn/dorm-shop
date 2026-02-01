@@ -1,45 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const router = useRouter();
-
-  // Polling Effect
-  useEffect(() => {
-    if (!pendingRequestId) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch("/api/login/check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ requestId: pendingRequestId })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === "approved") {
-            window.location.href = "/admin"; // Success
-          } else if (data.status === "rejected") {
-            setPendingRequestId(null);
-            setError("Giriş reddedildi! ❌");
-          }
-          // if pending, do nothing
-        }
-      } catch (e) {
-        console.error("Polling error", e);
-      }
-    }, 2000); // Check every 2s
-
-    return () => clearInterval(interval);
-  }, [pendingRequestId]);
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,12 +23,8 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        if (data.requires2FA && data.requestId) {
-          setPendingRequestId(data.requestId);
-        } else {
-          // Fallback if 2FA disabled server side? Currently enforced.
-          window.location.href = "/admin";
-        }
+        // Successful login (Cookie is set by server)
+        window.location.href = "/admin";
       } else {
         setError(data.error || "Hatalı şifre!");
       }
@@ -70,29 +34,6 @@ export default function LoginPage() {
       setError("Giriş sırasında bir hata oluştu.");
     }
   };
-
-  if (pendingRequestId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
-        <div className="glass-card p-8 w-full max-w-sm text-center border border-yellow-500/30 bg-zinc-900/80 rounded-xl animate-pulse-slow">
-          <div className="text-5xl mb-6">📱</div>
-          <h1 className="text-xl font-bold mb-2">Onay Bekleniyor</h1>
-          <p className="text-zinc-400 text-sm mb-6">
-            Telegram üzerinden giriş onayı gönderildi. Lütfen telefondan onaylayın.
-          </p>
-          <div className="flex justify-center mb-6">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <button
-            onClick={() => setPendingRequestId(null)}
-            className="text-xs text-red-400 hover:text-red-300 underline"
-          >
-            İptal Et
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
