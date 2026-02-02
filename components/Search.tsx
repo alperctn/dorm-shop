@@ -56,8 +56,9 @@ export function Search() {
         }
         const lower = query.toLowerCase();
         const results = products.filter(p =>
-            p.name.toLowerCase().includes(lower) ||
-            (p.category && p.category.toLowerCase().includes(lower))
+            (p.isVisible !== false) &&
+            (p.name.toLowerCase().includes(lower) ||
+                (p.category && p.category.toLowerCase().includes(lower)))
         );
         setFilteredProducts(results);
     }, [query, products]);

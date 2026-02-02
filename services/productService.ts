@@ -1,5 +1,4 @@
 
-
 export interface Product {
     id: number;
     name: string;
@@ -7,14 +6,13 @@ export interface Product {
     costPrice?: number; // Alış Fiyatı
     stock: number;
     category: string;
+    description?: string;
     emoji?: string;
     imageUrl?: string;
+    isVisible?: boolean; // New field for hiding products
 }
 
 export const INITIAL_PRODUCTS: Product[] = [
-    { id: 1, name: "Coca Cola (330ml)", price: 25, stock: 10, category: "icecekler", emoji: "🥤" },
-    { id: 2, name: "Fanta (330ml)", price: 25, stock: 4, category: "icecekler", emoji: "🍊" },
-    { id: 3, name: "Sprite (330ml)", price: 25, stock: 8, category: "icecekler", emoji: "🍋" },
     { id: 4, name: "Ice Tea Şeftali", price: 25, stock: 0, category: "icecekler", emoji: "🍑" },
     { id: 5, name: "Lays Klasik", price: 30, stock: 15, category: "yiyecekler", emoji: "🥔" },
     { id: 6, name: "Lays Baharatlı", price: 30, stock: 12, category: "yiyecekler", emoji: "🌶️" },

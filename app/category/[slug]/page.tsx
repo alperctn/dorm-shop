@@ -19,7 +19,7 @@ export default function CategoryPage() {
         const loadProducts = async () => {
             const allProducts = await fetchProducts();
             if (slug) {
-                const filtered = allProducts.filter(p => p.category === slug);
+                const filtered = allProducts.filter(p => p.category === slug && p.isVisible !== false);
                 setProducts(filtered);
             }
         };
