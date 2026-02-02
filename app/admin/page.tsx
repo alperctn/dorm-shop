@@ -125,56 +125,7 @@ export default function AdminPage() {
 
     // ... return statement ...
 
-    {/* Hardware Control */ }
-    <div className="glass-card p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Mekan & Servis Durumu</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dükkan Açık/Kapalı */}
-            <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
-                <h3 className="text-sm font-bold text-zinc-400 mb-3">🏪 Dükkan Durumu</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => toggleShopStatus(true)}
-                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isShopOpen ? 'bg-green-500/20 border border-green-500 text-green-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-xl">🟢</span>
-                        <span className="font-bold text-sm">AÇIK</span>
-                    </button>
-                    <button
-                        onClick={() => toggleShopStatus(false)}
-                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isShopOpen ? 'bg-red-500/20 border border-red-500 text-red-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-xl">🔴</span>
-                        <span className="font-bold text-sm">KAPALI</span>
-                    </button>
-                </div>
-            </div>
 
-            {/* Paket Servis */}
-            <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
-                <h3 className="text-sm font-bold text-zinc-400 mb-3">🛵 Paket Servis (Odaya Teslim)</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => toggleDeliveryStatus(true)}
-                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isDeliveryOpen ? 'bg-blue-500/20 border border-blue-500 text-blue-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-xl">🛵</span>
-                        <span className="font-bold text-sm">AKTİF</span>
-                    </button>
-                    <button
-                        onClick={() => toggleDeliveryStatus(false)}
-                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isDeliveryOpen ? 'bg-orange-500/20 border border-orange-500 text-orange-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-xl">🚫</span>
-                        <span className="font-bold text-sm">KAPALI</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <p className="text-xs text-center mt-4 text-zinc-500">
-            Paket servisi kapatıldığında müşteriler sadece "Gel-Al" seçeneğini kullanabilir.
-        </p>
-    </div>
 
     const handleStockChange = async (id: number, newStock: string) => {
         const stockVal = parseInt(newStock);
@@ -287,6 +238,57 @@ export default function AdminPage() {
                     </Link>
                 </div>
             </header>
+
+            {/* Hardware Control */}
+            <div className="glass-card p-6 mb-8">
+                <h2 className="text-xl font-semibold mb-4">Mekan & Servis Durumu</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Dükkan Açık/Kapalı */}
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                        <h3 className="text-sm font-bold text-zinc-400 mb-3">🏪 Dükkan Durumu</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => toggleShopStatus(true)}
+                                className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isShopOpen ? 'bg-green-500/20 border border-green-500 text-green-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                            >
+                                <span className="text-xl">🟢</span>
+                                <span className="font-bold text-sm">AÇIK</span>
+                            </button>
+                            <button
+                                onClick={() => toggleShopStatus(false)}
+                                className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isShopOpen ? 'bg-red-500/20 border border-red-500 text-red-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                            >
+                                <span className="text-xl">🔴</span>
+                                <span className="font-bold text-sm">KAPALI</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Paket Servis */}
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                        <h3 className="text-sm font-bold text-zinc-400 mb-3">🛵 Paket Servis (Odaya Teslim)</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => toggleDeliveryStatus(true)}
+                                className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isDeliveryOpen ? 'bg-blue-500/20 border border-blue-500 text-blue-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                            >
+                                <span className="text-xl">🛵</span>
+                                <span className="font-bold text-sm">AKTİF</span>
+                            </button>
+                            <button
+                                onClick={() => toggleDeliveryStatus(false)}
+                                className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isDeliveryOpen ? 'bg-orange-500/20 border border-orange-500 text-orange-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                            >
+                                <span className="text-xl">🚫</span>
+                                <span className="font-bold text-sm">KAPALI</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <p className="text-xs text-center mt-4 text-zinc-500">
+                    Paket servisi kapatıldığında müşteriler sadece "Gel-Al" seçeneğini kullanabilir.
+                </p>
+            </div>
 
             {/* Active Orders Section (NEW) */}
             <div className="glass-card p-6 mb-8 border-l-4 border-yellow-500">
