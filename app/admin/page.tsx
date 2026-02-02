@@ -25,55 +25,14 @@ export default function AdminPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State for editing
     const [hourlyData, setHourlyData] = useState<{ hour: string, count: number }[]>([]);
     const [isShopOpen, setIsShopOpen] = useState(true);
+    const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
 
     // Load products and categories on mount
     useEffect(() => {
-        const load = async () => {
-            const [prodData, catData] = await Promise.all([
-                fetchProducts(),
-                fetchCategories()
-            ]);
-            setProducts(prodData);
-            setCategories(catData);
-            if (catData.length > 0) {
-                setNewProduct(prev => ({ ...prev, category: catData[0].slug }));
-            }
-
-            // Fetch Real Revenue from Server
-            try {
-                const revRes = await fetch("/api/revenue");
-                if (revRes.ok) {
-                    const revData = await revRes.json();
-                    setRevenue(revData);
-                }
-            } catch (err) {
-                console.error("Revenue fetch error", err);
-            }
-
-            // Fetch Visitor Stats
-            try {
-                const visRes = await fetch("/api/visit");
-                if (visRes.ok) {
-                    const visData = await visRes.json();
-                    setVisitors(visData);
-                }
-            } catch (err) {
-                console.error("Visit fetch error", err);
-            }
-
-            // Fetch Hourly Sales Heatmap
-            try {
-                const mapRes = await fetch("/api/sales");
-                if (mapRes.ok) {
-                    const mapData = await mapRes.json();
-                    setHourlyData(mapData);
-                }
-            } catch (e) { console.error("Heatmap fetch error", e); }
-        };
-        load();
+        // ... existing load logic ...
     }, []);
 
-    // Shop Status
+    // Shop Status & Delivery Status
     useEffect(() => {
         const fetchStatus = async () => {
             try {
@@ -81,6 +40,7 @@ export default function AdminPage() {
                 if (res.ok) {
                     const data = await res.json();
                     setIsShopOpen(data.isOpen);
+                    setIsDeliveryOpen(data.deliveryAvailable);
                 }
             } catch (e) {
                 console.error("Status fetch error", e);
@@ -102,6 +62,75 @@ export default function AdminPage() {
             alert("Durum güncellenemedi!");
         }
     };
+
+    const toggleDeliveryStatus = async (status: boolean) => {
+        setIsDeliveryOpen(status); // Optimistic update
+        try {
+            await fetch("/api/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deliveryAvailable: status })
+            });
+        } catch (e) {
+            console.error("Status update error", e);
+            alert("Durum güncellenemedi!");
+        }
+    };
+
+    // ... handleStockChange, handleDeleteProduct ...
+
+    // ... return statement ...
+
+    {/* Hardware Control */ }
+    <div className="glass-card p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Mekan & Servis Durumu</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dükkan Açık/Kapalı */}
+            <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                <h3 className="text-sm font-bold text-zinc-400 mb-3">🏪 Dükkan Durumu</h3>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => toggleShopStatus(true)}
+                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isShopOpen ? 'bg-green-500/20 border border-green-500 text-green-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                    >
+                        <span className="text-xl">🟢</span>
+                        <span className="font-bold text-sm">AÇIK</span>
+                    </button>
+                    <button
+                        onClick={() => toggleShopStatus(false)}
+                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isShopOpen ? 'bg-red-500/20 border border-red-500 text-red-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                    >
+                        <span className="text-xl">🔴</span>
+                        <span className="font-bold text-sm">KAPALI</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Paket Servis */}
+            <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                <h3 className="text-sm font-bold text-zinc-400 mb-3">🛵 Paket Servis (Odaya Teslim)</h3>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => toggleDeliveryStatus(true)}
+                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${isDeliveryOpen ? 'bg-blue-500/20 border border-blue-500 text-blue-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                    >
+                        <span className="text-xl">🛵</span>
+                        <span className="font-bold text-sm">AKTİF</span>
+                    </button>
+                    <button
+                        onClick={() => toggleDeliveryStatus(false)}
+                        className={`flex flex-col items-center justify-center gap-2 py-4 rounded-lg transition ${!isDeliveryOpen ? 'bg-orange-500/20 border border-orange-500 text-orange-400' : 'bg-black/40 text-zinc-600 opacity-50 hover:opacity-100'}`}
+                    >
+                        <span className="text-xl">🚫</span>
+                        <span className="font-bold text-sm">KAPALI</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <p className="text-xs text-center mt-4 text-zinc-500">
+            Paket servisi kapatıldığında müşteriler sadece "Gel-Al" seçeneğini kullanabilir.
+        </p>
+    </div>
 
     const handleStockChange = async (id: number, newStock: string) => {
         const stockVal = parseInt(newStock);
@@ -555,27 +584,6 @@ export default function AdminPage() {
                 </div>
             </div>
 
-            {/* Hardware Control */}
-            <div className="glass-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Mekan Durumu</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <button
-                        onClick={() => toggleShopStatus(true)}
-                        className={`flex flex-col items-center justify-center gap-2 border py-6 rounded-xl transition ${isShopOpen ? 'bg-green-500/20 border-green-500 text-green-400 shadow-lg shadow-green-500/10' : 'bg-zinc-900 border-zinc-800 text-zinc-500 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-2xl">🟢</span>
-                        <span className="font-bold">AÇIK</span>
-                    </button>
-                    <button
-                        onClick={() => toggleShopStatus(false)}
-                        className={`flex flex-col items-center justify-center gap-2 border py-6 rounded-xl transition ${!isShopOpen ? 'bg-red-500/20 border-red-500 text-red-400 shadow-lg shadow-red-500/10' : 'bg-zinc-900 border-zinc-800 text-zinc-500 opacity-50 hover:opacity-100'}`}
-                    >
-                        <span className="text-2xl">🔴</span>
-                        <span className="font-bold">KAPALI</span>
-                    </button>
-                </div>
-                <p className="text-xs text-center mt-4 text-zinc-500">Bu ayar ana sayfadaki "Dükkan Açık" yazısını değiştirir.</p>
-            </div>
 
             {/* Edit Product Modal */}
             {editingProduct && (

@@ -13,6 +13,17 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "iban">("cash");
     const [roomNumber, setRoomNumber] = useState("");
     const [loading, setLoading] = useState(false);
+    const [deliveryAvailable, setDeliveryAvailable] = useState(true);
+
+    // Fetch delivery status
+    useState(() => {
+        fetch("/api/status").then(res => res.json()).then(data => {
+            setDeliveryAvailable(data.deliveryAvailable);
+            if (!data.deliveryAvailable) {
+                setDeliveryMethod("pickup");
+            }
+        });
+    });
 
     // Sabit 5 TL teslimat ücreti (150 TL üzeri ücretsiz)
     const deliveryFee = deliveryMethod === "delivery" ? (totalPrice >= 150 ? 0 : 5) : 0;
@@ -162,6 +173,13 @@ export default function CheckoutPage() {
                 <div className="glass-card p-4 space-y-4">
                     <h2 className="font-semibold text-lg border-b border-white/5 pb-2">Teslimat</h2>
 
+                    {!deliveryAvailable && (
+                        <div className="bg-orange-500/10 border border-orange-500/20 text-orange-400 p-3 rounded-lg text-sm flex items-center gap-2 mb-2">
+                            <span>⚠️</span>
+                            <span>Şu an sadece "Gel-Al" servisimiz hizmet vermektedir.</span>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={() => setDeliveryMethod("pickup")}
@@ -173,8 +191,9 @@ export default function CheckoutPage() {
                         </button>
 
                         <button
-                            onClick={() => setDeliveryMethod("delivery")}
-                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition ${deliveryMethod === 'delivery' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
+                            onClick={() => deliveryAvailable && setDeliveryMethod("delivery")}
+                            disabled={!deliveryAvailable}
+                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition ${!deliveryAvailable ? 'opacity-50 cursor-not-allowed bg-black/20 text-zinc-600 border-zinc-800' : deliveryMethod === 'delivery' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
                         >
                             <span className="text-2xl">🚪</span>
                             <div className="text-sm font-bold">Odaya Teslim</div>

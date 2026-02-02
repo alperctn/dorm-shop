@@ -6,9 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        const status = await dbServer.get("/shopStatus");
-        // Default to true if not set
-        return NextResponse.json({ isOpen: status === null ? true : status });
+        const [isOpen, deliveryAvailable] = await Promise.all([
+            dbServer.get("/shopStatus"),
+            dbServer.get("/deliveryStatus")
+        ]);
+
+        return NextResponse.json({
+            isOpen: isOpen === null ? true : isOpen,
+            deliveryAvailable: deliveryAvailable === null ? true : deliveryAvailable
+        });
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 });
     }
@@ -23,9 +29,17 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { isOpen } = await request.json();
-        await dbServer.put("/shopStatus", isOpen);
-        return NextResponse.json({ success: true, isOpen });
+        const body = await request.json();
+
+        if (body.isOpen !== undefined) {
+            await dbServer.put("/shopStatus", body.isOpen);
+        }
+
+        if (body.deliveryAvailable !== undefined) {
+            await dbServer.put("/deliveryStatus", body.deliveryAvailable);
+        }
+
+        return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
     }
