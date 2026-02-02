@@ -29,7 +29,51 @@ export default function AdminPage() {
 
     // Load products and categories on mount
     useEffect(() => {
-        // ... existing load logic ...
+        const load = async () => {
+            const [prodData, catData] = await Promise.all([
+                fetchProducts(),
+                fetchCategories()
+            ]);
+            setProducts(prodData);
+            setCategories(catData);
+            if (catData.length > 0) {
+                setNewProduct(prev => ({ ...prev, category: catData[0].slug }));
+            }
+
+            // Fetch Real Revenue from Server
+            try {
+                const revRes = await fetch("/api/revenue");
+                if (revRes.ok) {
+                    const revData = await revRes.json();
+                    setRevenue(revData);
+                }
+            } catch (err) {
+                console.error("Revenue fetch error", err);
+            }
+
+            // Fetch Visitor Stats
+            try {
+                const visRes = await fetch("/api/visit");
+                if (visRes.ok) {
+                    const visData = await visRes.json();
+                    setVisitors(visData);
+                }
+            } catch (err) {
+                console.error("Visit fetch error", err);
+            }
+
+            // Fetch Hourly Sales Heatmap
+            try {
+                const mapRes = await fetch("/api/sales");
+                if (mapRes.ok) {
+                    const mapData = await mapRes.json();
+                    setHourlyData(mapData);
+                }
+            } catch (e) {
+                console.error("Heatmap fetch error", e);
+            }
+        };
+        load();
     }, []);
 
     // Shop Status & Delivery Status
