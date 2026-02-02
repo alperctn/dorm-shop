@@ -132,7 +132,6 @@ export default function AdminPage() {
             costPrice: Number(newProduct.costPrice),
             stock: Number(newProduct.stock),
             category: newProduct.category,
-            category: newProduct.category,
             emoji: "📦",
             imageUrl: newProduct.imageUrl,
             isVisible: true // Default visible
@@ -512,45 +511,47 @@ export default function AdminPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-end">
-                                    <label className="text-[10px] text-zinc-500 mb-1">Stok Adedi</label>
-                                    <input
-                                        type="number"
-                                        value={product.stock}
-                                        onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                        className="w-20 bg-black/50 border border-zinc-700 rounded-lg p-2 text-center text-primary font-bold focus:outline-none focus:border-primary"
-                                    />
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col items-end">
+                                        <label className="text-[10px] text-zinc-500 mb-1">Stok Adedi</label>
+                                        <input
+                                            type="number"
+                                            value={product.stock}
+                                            onChange={(e) => handleStockChange(product.id, e.target.value)}
+                                            className="w-20 bg-black/50 border border-zinc-700 rounded-lg p-2 text-center text-primary font-bold focus:outline-none focus:border-primary"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const updated = products.map(p =>
+                                                p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
+                                            );
+                                            setProducts(updated);
+                                            await saveProducts(updated);
+                                        }}
+                                        className={`p-2 rounded-lg transition mr-2 ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
+                                        title={product.isVisible === false ? "Ürünü Göster" : "Ürünü Gizle"}
+                                    >
+                                        {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingProduct(product)}
+                                        className="bg-blue-500/10 text-blue-500 p-2 rounded-lg hover:bg-blue-500/20 transition mr-2"
+                                        title="Düzenle"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteProduct(product.id)}
+                                        className="bg-red-500/10 text-red-500 p-2 rounded-lg hover:bg-red-500/20 transition"
+                                        title="Ürünü Sil"
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={async () => {
-                                        const updated = products.map(p =>
-                                            p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
-                                        );
-                                        setProducts(updated);
-                                        await saveProducts(updated);
-                                    }}
-                                    className={`p-2 rounded-lg transition mr-2 ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                                    title={product.isVisible === false ? "Ürünü Göster" : "Ürünü Gizle"}
-                                >
-                                    {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
-                                </button>
-                                <button
-                                    onClick={() => setEditingProduct(product)}
-                                    className="bg-blue-500/10 text-blue-500 p-2 rounded-lg hover:bg-blue-500/20 transition mr-2"
-                                    title="Düzenle"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteProduct(product.id)}
-                                    className="bg-red-500/10 text-red-500 p-2 rounded-lg hover:bg-red-500/20 transition"
-                                    title="Ürünü Sil"
-                                >
-                                    🗑️
-                                </button>
-                            </div>
                             </div>
                         ))}
+                    </div>
                 </div>
             </div>
 
@@ -575,113 +576,111 @@ export default function AdminPage() {
                 </div>
                 <p className="text-xs text-center mt-4 text-zinc-500">Bu ayar ana sayfadaki "Dükkan Açık" yazısını değiştirir.</p>
             </div>
-        </div>
 
-            {/* Edit Product Modal */ }
-    {
-        editingProduct && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                <div className="glass-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold">Ürünü Düzenle</h2>
-                        <button onClick={() => setEditingProduct(null)} className="text-zinc-500 hover:text-white">✕</button>
-                    </div>
-
-                    <form onSubmit={handleUpdateProduct} className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="text-xs text-zinc-500 block mb-1">Ürün Adı</label>
-                            <input
-                                type="text"
-                                value={editingProduct.name}
-                                onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 focus:border-blue-500 outline-none"
-                            />
+            {/* Edit Product Modal */}
+            {editingProduct && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="glass-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">Ürünü Düzenle</h2>
+                            <button onClick={() => setEditingProduct(null)} className="text-zinc-500 hover:text-white">✕</button>
                         </div>
 
-                        <div className="col-span-2">
-                            <label className="text-xs text-zinc-500 block mb-1">Ürün Resmi</label>
-                            <div className="flex items-center gap-4">
-                                {editingProduct.imageUrl && (
-                                    <img src={editingProduct.imageUrl} className="w-16 h-16 object-contain rounded border border-white/10" />
-                                )}
+                        <form onSubmit={handleUpdateProduct} className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="text-xs text-zinc-500 block mb-1">Ürün Adı</label>
                                 <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        const reader = new FileReader();
-                                        reader.readAsDataURL(file);
-                                        reader.onload = (ev) => {
-                                            const img = new Image();
-                                            img.src = ev.target?.result as string;
-                                            img.onload = () => {
-                                                const canvas = document.createElement("canvas");
-                                                const MAX_W = 500, MAX_H = 500;
-                                                let w = img.width, h = img.height;
-                                                if (w > h) { if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; } }
-                                                else { if (h > MAX_H) { w *= MAX_H / h; h = MAX_H; } }
-                                                canvas.width = w; canvas.height = h;
-                                                const ctx = canvas.getContext("2d");
-                                                ctx?.drawImage(img, 0, 0, w, h);
-                                                setEditingProduct({ ...editingProduct, imageUrl: canvas.toDataURL("image/jpeg", 0.7) });
-                                            };
-                                        };
-                                    }}
+                                    type="text"
+                                    value={editingProduct.name}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 focus:border-blue-500 outline-none"
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="text-xs text-zinc-500 block mb-1">Fiyat (₺)</label>
-                            <input
-                                type="number"
-                                value={editingProduct.price}
-                                onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
-                            />
-                        </div>
+                            <div className="col-span-2">
+                                <label className="text-xs text-zinc-500 block mb-1">Ürün Resmi</label>
+                                <div className="flex items-center gap-4">
+                                    {editingProduct.imageUrl && (
+                                        <img src={editingProduct.imageUrl} className="w-16 h-16 object-contain rounded border border-white/10" />
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.readAsDataURL(file);
+                                            reader.onload = (ev) => {
+                                                const img = new Image();
+                                                img.src = ev.target?.result as string;
+                                                img.onload = () => {
+                                                    const canvas = document.createElement("canvas");
+                                                    const MAX_W = 500, MAX_H = 500;
+                                                    let w = img.width, h = img.height;
+                                                    if (w > h) { if (w > MAX_W) { h *= MAX_W / w; w = MAX_W; } }
+                                                    else { if (h > MAX_H) { w *= MAX_H / h; h = MAX_H; } }
+                                                    canvas.width = w; canvas.height = h;
+                                                    const ctx = canvas.getContext("2d");
+                                                    ctx?.drawImage(img, 0, 0, w, h);
+                                                    setEditingProduct({ ...editingProduct, imageUrl: canvas.toDataURL("image/jpeg", 0.7) });
+                                                };
+                                            };
+                                        }}
+                                    />
+                                </div>
+                            </div>
 
-                        <div>
-                            <label className="text-xs text-zinc-500 block mb-1">Maliyet (₺)</label>
-                            <input
-                                type="number"
-                                value={editingProduct.costPrice || ""}
-                                onChange={(e) => setEditingProduct({ ...editingProduct, costPrice: Number(e.target.value) })}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
-                            />
-                        </div>
+                            <div>
+                                <label className="text-xs text-zinc-500 block mb-1">Fiyat (₺)</label>
+                                <input
+                                    type="number"
+                                    value={editingProduct.price}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
+                                />
+                            </div>
 
-                        <div>
-                            <label className="text-xs text-zinc-500 block mb-1">Stok</label>
-                            <input
-                                type="number"
-                                value={editingProduct.stock}
-                                onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
-                            />
-                        </div>
+                            <div>
+                                <label className="text-xs text-zinc-500 block mb-1">Maliyet (₺)</label>
+                                <input
+                                    type="number"
+                                    value={editingProduct.costPrice || ""}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, costPrice: Number(e.target.value) })}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
+                                />
+                            </div>
 
-                        <div>
-                            <label className="text-xs text-zinc-500 block mb-1">Kategori</label>
-                            <select
-                                value={editingProduct.category}
-                                onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
-                            >
-                                {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
-                            </select>
-                        </div>
+                            <div>
+                                <label className="text-xs text-zinc-500 block mb-1">Stok</label>
+                                <input
+                                    type="number"
+                                    value={editingProduct.stock}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
+                                />
+                            </div>
 
-                        <button type="submit" className="col-span-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl mt-4">
-                            Değişiklikleri Kaydet
-                        </button>
-                    </form>
+                            <div>
+                                <label className="text-xs text-zinc-500 block mb-1">Kategori</label>
+                                <select
+                                    value={editingProduct.category}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 outline-none focus:border-blue-500"
+                                >
+                                    {categories.map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}
+                                </select>
+                            </div>
+
+                            <button type="submit" className="col-span-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl mt-4">
+                                Değişiklikleri Kaydet
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        )
-    }
+            )
+            }
         </div >
     );
 }
