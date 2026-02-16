@@ -366,6 +366,7 @@ export default function AdminPage() {
 
                 <div className="glass-card p-6 border-l-4 border-blue-500 relative">
                     <h2 className="text-lg font-bold text-zinc-400 mb-2">Günlük Ziyaretçi</h2>
+
                     <div className="flex justify-between items-end mb-4">
                         <div>
                             <div className="text-4xl font-bold text-blue-400">
@@ -374,6 +375,14 @@ export default function AdminPage() {
                             </div>
                             <div className="text-sm text-zinc-500 mt-1">
                                 Dün: <span className="text-zinc-400 font-bold">{visitors.length > 1 ? visitors[1].count : 0}</span>
+                            </div>
+                        </div>
+
+                        <div className="text-right">
+                            <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Rekor</div>
+                            <div className="text-2xl font-bold text-yellow-500">
+                                {visitors.length > 0 ? Math.max(...visitors.map(v => v.count)) : 0}
+                                <span className="text-xs text-zinc-600 font-normal ml-1">Kişi</span>
                             </div>
                         </div>
                     </div>
