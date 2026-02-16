@@ -118,29 +118,39 @@ export default function Home() {
             </Link>
           ))}
 
-          {/* Print Service Card - Separate Entry */}
+        </div>
+
+        {/* Sell Request & Print Service */}
+        <div className="grid md:grid-cols-2 gap-6 mt-6">
+          {/* Print Service */}
           <Link
             href="/print"
-            className="glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 md:col-span-3 hover:border-zinc-500/50 flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left"
+            className="glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 hover:border-zinc-500/50 flex flex-col items-center text-center relative overflow-hidden"
           >
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/10 to-zinc-500/10 flex items-center justify-center text-5xl shadow-lg group-hover:shadow-xl transition-shadow flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-zinc-500/10 flex items-center justify-center text-4xl shadow-lg mb-4">
               🖨️
             </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-2">Çıktı Al</h2>
-              <p className="text-zinc-500 text-sm mb-4">Ödev, ders notu veya belge çıkart. Sayfası sadece 5 TL.</p>
-              <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
-                <span>📄 Siyah-Beyaz</span>
-                <span className="w-1 h-1 rounded-full bg-zinc-600"></span>
-                <span>Anında Teslim</span>
-              </div>
-            </div>
-            <div className="mt-2 md:mt-0 self-center">
-              <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition">
-                &rarr;
-              </div>
+            <h2 className="text-xl font-bold text-zinc-100 mb-1">Çıktı Al</h2>
+            <p className="text-zinc-500 text-sm mb-3">Ödev ve not çıkart.</p>
+            <div className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
+              Sayfası 5 TL
             </div>
           </Link>
+
+          {/* Sell Application (Coming Soon) */}
+          <div className="glass-card p-8 group border border-white/5 flex flex-col items-center text-center relative overflow-hidden opacity-80">
+            <div className="absolute top-3 right-3 bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
+              ÇOK YAKINDA
+            </div>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-lg mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
+              🤝
+            </div>
+            <h2 className="text-xl font-bold text-zinc-100 mb-1">Ben de Satmak İstiyorum</h2>
+            <p className="text-zinc-500 text-sm mb-3">Kendi ürünlerini burada sat.</p>
+            <div className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-900/50 text-zinc-500 border border-zinc-700/50 cursor-not-allowed">
+              Başvuru Kapalı
+            </div>
+          </div>
         </div>
 
         {/* Digital Request Box */}
