@@ -148,7 +148,7 @@ export default function Home() {
             <h2 className="text-xl font-bold text-zinc-100 mb-1">Ben de Satmak İstiyorum</h2>
             <p className="text-zinc-500 text-sm mb-3">Kendi ürünlerini burada sat.</p>
             <Link
-              href="/seller/login"
+              href="/marketplace"
               className="text-xs font-bold px-4 py-2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-500 transition-colors"
             >
               Satıcı Girişi

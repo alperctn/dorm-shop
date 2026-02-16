@@ -146,7 +146,7 @@ export default function SellerDashboard() {
                                 value={newProduct.name}
                                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                                 className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
-                                placeholder="Örn: Ev Yapımı Kek"
+                                placeholder="Örn: Mentollü Sigara"
                             />
                         </div>
 
