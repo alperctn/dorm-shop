@@ -128,8 +128,8 @@ export default function AdminPage() {
 
 
     const handleStockChange = async (id: number, newStock: string) => {
-        const stockVal = parseInt(newStock);
-        if (isNaN(stockVal)) return;
+        let stockVal = parseInt(newStock);
+        if (isNaN(stockVal)) stockVal = 0;
 
         const updatedProducts = products.map(p =>
             p.id === id ? { ...p, stock: stockVal } : p
