@@ -53,6 +53,12 @@ export default function SellerLoginPage() {
             <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="w-full max-w-md bg-zinc-900/50 border border-white/10 rounded-2xl p-8 backdrop-blur-xl relative z-10">
+                <div className="absolute top-4 left-4 z-20">
+                    <Link href="/" className="text-zinc-400 hover:text-white flex items-center gap-2 transition-colors text-sm">
+                        ← Ana Sayfa
+                    </Link>
+                </div>
+
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl flex items-center justify-center text-4xl mx-auto mb-4 border border-white/5">
                         🔐
