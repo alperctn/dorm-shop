@@ -38,7 +38,11 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const newProduct = { ...body, seller: username };
+        const newProduct: Product = {
+            ...body,
+            seller: username,
+            approvalStatus: 'pending' // Default to pending for seller products
+        };
 
         const allProducts = (await dbServer.get("/products")) as Product[] || [];
 

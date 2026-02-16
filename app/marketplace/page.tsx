@@ -30,8 +30,10 @@ export default function MarketplacePage() {
                     // OR if the user wants to see EVERYTHING, I'll show everything.
                     // "satıcı ürünleri listelensin" implies products added by sellers.
 
-                    const sellerProducts = data.filter(p => p.seller);
-                    setProducts(sellerProducts);
+
+                    // Filter: Show Admin items (no seller) OR Approved Seller items
+                    const displayProducts = data.filter(p => !p.seller || p.approvalStatus === 'approved');
+                    setProducts(displayProducts);
                 }
             } catch (error) {
                 console.error("Failed to fetch products");

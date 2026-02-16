@@ -11,6 +11,7 @@ export interface Product {
     imageUrl?: string;
     isVisible?: boolean; // New field for hiding products
     seller?: string; // Username of the seller
+    approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export const INITIAL_PRODUCTS: Product[] = [

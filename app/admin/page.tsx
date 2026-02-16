@@ -798,6 +798,98 @@ export default function AdminPage() {
     );
 }
 
+function ProductApproval() {
+    const [pendingProducts, setPendingProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchPendingProducts = async () => {
+        try {
+            const res = await fetch("/api/products");
+            if (res.ok) {
+                const data: Product[] = await res.json();
+                setPendingProducts(data.filter(p => p.approvalStatus === 'pending'));
+            }
+        } catch (error) {
+            console.error("Failed to fetch products");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPendingProducts();
+    }, []);
+
+    const handleApproval = async (id: number, action: 'approve' | 'reject') => {
+        if (!confirm(`Bu ürünü ${action === 'approve' ? 'onaylamak' : 'reddetmek'} istediğinize emin misiniz?`)) return;
+
+        try {
+            const res = await fetch("/api/admin/products/approve", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, action })
+            });
+
+            if (res.ok) {
+                alert("İşlem başarılı.");
+                fetchPendingProducts();
+            } else {
+                alert("Bir hata oluştu.");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    if (loading) return <div className="text-zinc-500">Yükleniyor...</div>;
+    if (pendingProducts.length === 0) return <div className="text-zinc-500 italic">Bekleyen ürün onayı yok.</div>;
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-zinc-400">
+                <thead className="text-xs uppercase bg-zinc-900/50 text-zinc-300">
+                    <tr>
+                        <th className="px-4 py-3 rounded-l-lg">Ürün</th>
+                        <th className="px-4 py-3">Fiyat</th>
+                        <th className="px-4 py-3">Satıcı</th>
+                        <th className="px-4 py-3 rounded-r-lg text-right">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                    {pendingProducts.map((p) => (
+                        <tr key={p.id} className="hover:bg-zinc-900/30 transition">
+                            <td className="px-4 py-3 flex items-center gap-3">
+                                {p.imageUrl ? (
+                                    <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-cover rounded bg-zinc-800" />
+                                ) : (
+                                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center">{p.emoji || "📦"}</div>
+                                )}
+                                <span className="text-white font-medium">{p.name}</span>
+                            </td>
+                            <td className="px-4 py-3 text-zinc-300">{p.price}₺</td>
+                            <td className="px-4 py-3 text-zinc-300">@{p.seller}</td>
+                            <td className="px-4 py-3 text-right space-x-2">
+                                <button
+                                    onClick={() => handleApproval(p.id, 'approve')}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-md text-xs transition"
+                                >
+                                    Onayla
+                                </button>
+                                <button
+                                    onClick={() => handleApproval(p.id, 'reject')}
+                                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-md text-xs transition"
+                                >
+                                    Reddet
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
 function SellerManagement() {
     const [sellers, setSellers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
