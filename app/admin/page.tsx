@@ -822,7 +822,7 @@ function ProductApproval() {
 
     const fetchPendingProducts = async () => {
         try {
-            const res = await fetch("/api/products");
+            const res = await fetch("/api/admin/products/list");
             if (res.ok) {
                 const data: Product[] = await res.json();
                 setPendingProducts(data.filter(p => p.approvalStatus === 'pending'));
@@ -942,15 +942,23 @@ function SellerManagement() {
         }
     };
 
-    const handleStatusUpdate = async (username: string, action: string, e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent modal opening
-        if (!confirm(`Bu satıcıyı ${action === 'approve' ? 'onaylamak' : action === 'reject' ? 'reddetmek' : 'yasaklamak'} istediğinize emin misiniz?`)) return;
+    const handleStatusUpdate = async (username: string, action: string, e: any) => {
+        if (e && e.stopPropagation) e.stopPropagation(); // Prevent modal opening if event exists
+
+        let body: any = { username, action };
+
+        if (action === 'updateLimit') {
+            if (!confirm(`Bu satıcının ürün limitini ${e.target.value} olarak güncellemek istiyor musunuz?`)) return;
+            body.limit = e.target.value;
+        } else {
+            if (!confirm(`Bu satıcıyı ${action === 'approve' ? 'onaylamak' : action === 'reject' ? 'reddetmek' : 'yasaklamak'} istediğinize emin misiniz?`)) return;
+        }
 
         try {
             const res = await fetch("/api/admin/sellers/update", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, action })
+                body: JSON.stringify(body)
             });
 
             if (res.ok) {
@@ -1053,6 +1061,28 @@ function SellerManagement() {
                             <div>
                                 <h2 className="text-2xl font-bold">{selectedSeller.display_name}</h2>
                                 <p className="text-zinc-500">@{selectedSeller.username} • {selectedSeller.productCount} Ürün • {selectedSeller.salesCount} Satış</p>
+
+                                {/* Limit Update UI */}
+                                <div className="mt-2 flex items-center gap-2">
+                                    <label className="text-xs text-zinc-400">Ürün Limiti:</label>
+                                    <input
+                                        type="number"
+                                        defaultValue={selectedSeller.productLimit || 2}
+                                        className="w-16 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
+                                        onBlur={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val)) {
+                                                handleStatusUpdate(selectedSeller.username, 'updateLimit', { ...e, target: { ...e.target, value: val } } as any);
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.currentTarget.blur();
+                                            }
+                                        }}
+                                    />
+                                    <span className="text-[10px] text-zinc-600">(Enter veya dışarı tıkla)</span>
+                                </div>
                             </div>
                             <button onClick={() => setSelectedSeller(null)} className="text-zinc-500 hover:text-white text-2xl">✕</button>
                         </div>
@@ -1070,8 +1100,8 @@ function SellerManagement() {
                                             <div className="font-bold text-sm">{p.name}</div>
                                             <div className="text-xs text-zinc-500">{p.price}₺ • Stok: {p.stock}</div>
                                             <div className={`text-[10px] mt-1 inline-block px-1.5 py-0.5 rounded ${p.approvalStatus === 'approved' ? 'bg-green-500/20 text-green-500' :
-                                                    p.approvalStatus === 'rejected' ? 'bg-red-500/20 text-red-500' :
-                                                        'bg-yellow-500/20 text-yellow-500'
+                                                p.approvalStatus === 'rejected' ? 'bg-red-500/20 text-red-500' :
+                                                    'bg-yellow-500/20 text-yellow-500'
                                                 }`}>
                                                 {p.approvalStatus === 'approved' ? 'Onaylı' : p.approvalStatus === 'rejected' ? 'Reddedildi' : 'Bekliyor'}
                                             </div>

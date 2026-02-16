@@ -96,34 +96,61 @@ export default function CheckoutPage() {
             return;
         }
 
-        let message = `*Yeni Sipariş!* 🛒\n\n`;
-        items.forEach(item => {
-            message += `${item.quantity}x ${item.name}\n`;
-        });
-        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL)' : 'Gel Al'}`;
-        if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
-        message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
-        message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
+        setLoading(true);
 
-        const phoneNumber = "905061548080"; // Buraya kendi numaranızı yazın
-        window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        try {
+            // 1. Create Order on Server (Stock Deduction + Rate Limit)
+            const orderPayload = {
+                items,
+                deliveryMethod,
+                roomNumber,
+                paymentMethod: "whatsapp", // Mark as WA order
+                totalPrice: grandTotal
+            };
 
-        // Record Sale
-        const { addSale } = await import("@/services/revenueService");
-        const itemsSummary = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
+            const res = await fetch("/api/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderPayload),
+            });
+            const result = await res.json();
 
-        // Calculate Profit
-        const totalProfit = items.reduce((acc, item) => {
-            const cost = item.costPrice || 0;
-            const profitPerItem = item.price - cost;
-            return acc + (profitPerItem * item.quantity);
-        }, 0);
-        const finalProfit = totalProfit + deliveryFee;
+            if (!res.ok) {
+                throw new Error(result.error || "Sipariş oluşturulamadı");
+            }
 
-        addSale(grandTotal, finalProfit, itemsSummary, "whatsapp");
+            // 2. Prepare WA Message
+            let message = `*Yeni Sipariş!* 🛒\n\n`;
+            message += `*Sipariş ID:* ${result.orderId.slice(0, 8)}\n`; // Add shortened ID
+            items.forEach(item => {
+                message += `${item.quantity}x ${item.name}\n`;
+            });
+            message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL)' : 'Gel Al'}`;
+            if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
+            message += `\n💳 *Ödeme:* WhatsApp/Elden`;
+            message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
 
-        clearCart();
-        router.push("/");
+            // 3. Redirect
+            const phoneNumber = "905061548080";
+            window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+
+            // 4. Record Local Stats & Clear
+            const { addSale } = await import("@/services/revenueService");
+            // ... same calc logic ...
+            const itemsSummary = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
+            const totalProfit = items.reduce((acc, item) => {
+                const cost = item.costPrice || 0;
+                return acc + ((item.price - cost) * item.quantity);
+            }, 0);
+            addSale(grandTotal, totalProfit + deliveryFee, itemsSummary, "whatsapp");
+
+            clearCart();
+            router.push("/");
+        } catch (error: any) {
+            alert(`Hata: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (items.length === 0) {

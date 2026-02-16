@@ -23,23 +23,34 @@ export default function SellerDashboard() {
     const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "", category: "diger", imageUrl: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [productLimit, setProductLimit] = useState<number>(2);
+
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("/api/seller/products");
-                if (res.ok) {
-                    const data = await res.json();
-                    setProducts(data);
+                const [productsRes, statusRes] = await Promise.all([
+                    fetch("/api/seller/products"),
+                    fetch("/api/seller/status")
+                ]);
+
+                if (productsRes.ok) {
+                    setProducts(await productsRes.json());
                 } else {
-                    router.push("/seller/login"); // Redirect if unauthorized
+                    router.push("/seller/login");
+                    return;
+                }
+
+                if (statusRes.ok) {
+                    const status = await statusRes.json();
+                    setProductLimit(status.productLimit);
                 }
             } catch (error) {
-                console.error("Failed to fetch products");
+                console.error("Failed to fetch data");
             } finally {
                 setLoading(false);
             }
         };
-        fetchProducts();
+        fetchData();
     }, [router]);
 
     const handleAddProduct = async (e: React.FormEvent) => {
@@ -152,7 +163,15 @@ export default function SellerDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Product List */}
                 <div className="lg:col-span-2 space-y-4">
-                    <h2 className="text-xl font-bold mb-4">Ürünlerim ({products.length})</h2>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">Ürünlerim ({products.length})</h2>
+                        {products.length > 0 && (
+                            <div className="text-xs font-bold px-3 py-1 bg-zinc-900 rounded-full border border-zinc-800">
+                                Limit: <span className={`${products.length >= (productLimit || 2) ? 'text-red-500' : 'text-green-500'}`}>{products.length}</span> / {productLimit || 2}
+                            </div>
+                        )}
+                    </div>
+
                     {products.length === 0 ? (
                         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 text-center text-zinc-500">
                             Henüz ürünün yok. Yandaki formdan eklemeye başla! 🚀
@@ -163,8 +182,8 @@ export default function SellerDashboard() {
                                 <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition relative overflow-hidden group">
                                     {/* Status Badge */}
                                     <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg z-10 ${product.approvalStatus === 'approved' ? 'bg-green-500 text-black' :
-                                            product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
-                                                'bg-yellow-500 text-black'
+                                        product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
+                                            'bg-yellow-500 text-black'
                                         }`}>
                                         {product.approvalStatus === 'approved' ? 'ONAYLANDI' :
                                             product.approvalStatus === 'rejected' ? 'REDDEDİLDİ' :

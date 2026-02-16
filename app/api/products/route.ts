@@ -7,9 +7,14 @@ export const dynamic = "force-dynamic";
 // GET: Public - Fetch all products
 export async function GET() {
     try {
-        const data = await dbServer.get("/products");
-        // If data is null, return empty array to avoid client crash
-        return NextResponse.json(data || []);
+        const data = (await dbServer.get("/products")) || [];
+
+        // Filter: Show Admin items (no seller) OR Approved Seller Items
+        const visibleProducts = data.filter((p: any) =>
+            !p.seller || p.approvalStatus === 'approved'
+        );
+
+        return NextResponse.json(visibleProducts);
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
     }

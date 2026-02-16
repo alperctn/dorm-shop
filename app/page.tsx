@@ -143,7 +143,7 @@ export default function Home() {
             className="glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 hover:border-zinc-500/50 flex flex-col items-center text-center relative overflow-hidden"
           >
             <div className="absolute top-3 right-3 bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
-              TEST
+              TEST AŞAMASINDA
             </div>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-lg mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
               🤝

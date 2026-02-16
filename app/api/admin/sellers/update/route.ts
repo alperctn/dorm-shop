@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     // 1. Admin Auth Check
     const cookieStore = await cookies();
     const adminSession = cookieStore.get("admin_session");
-    if (!adminSession?.value) {
+    if (!adminSession || adminSession.value !== "secure_admin_token_123") {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,17 +26,42 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Seller not found" }, { status: 404 });
         }
 
-        // 3. Update Status
+        // 3. Update Status or Limit
+        if (action === "updateLimit") {
+            const limit = parseInt(body.limit);
+            if (!isNaN(limit)) {
+                await dbServer.patch(`/sellers/${safeUsername}`, { productLimit: limit });
+                return NextResponse.json({ success: true, productLimit: limit });
+            }
+        }
+
         let newStatus = seller.status;
         if (action === "approve") newStatus = "active";
         else if (action === "reject") newStatus = "rejected"; // We might just delete, but keeping record is better
         else if (action === "ban") newStatus = "banned";
         else if (action === "pending") newStatus = "pending";
 
-        await dbServer.patch(`/sellers/${safeUsername}`, { status: newStatus });
+        if (action !== "updateLimit") {
+            await dbServer.patch(`/sellers/${safeUsername}`, { status: newStatus });
 
-        // 4. Notify on Telegram (Optional)
-        // ...
+            // If seller is BANNED or REJECTED, we must hide their products
+            if (newStatus === "banned" || newStatus === "rejected") {
+                const allProducts = (await dbServer.get("/products")) as any[] || [];
+                let productsChanged = false;
+
+                const updatedProducts = allProducts.map(p => {
+                    if (p.seller === username) {
+                        productsChanged = true;
+                        return { ...p, approvalStatus: 'rejected' }; // Force reject to hide from public
+                    }
+                    return p;
+                });
+
+                if (productsChanged) {
+                    await dbServer.put("/products", updatedProducts);
+                }
+            }
+        }
 
         return NextResponse.json({ success: true, status: newStatus });
 

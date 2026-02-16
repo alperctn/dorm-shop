@@ -60,6 +60,7 @@ export async function GET() {
                 joinedAt: s.joinedAt,
                 productCount: sellerProducts.length,
                 salesCount: salesCount,
+                productLimit: s.productLimit || 2,
                 products: sellerProducts // Send products to frontend for the modal
             };
         });
