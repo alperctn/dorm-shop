@@ -68,7 +68,7 @@ export default function Home() {
           </h1>
           <p className="text-zinc-400 text-lg">Ne lazımsa, hemen kapında.</p>
 
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-col items-center gap-3">
             {isShopOpen ? (
               <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
                 <span className="relative flex h-3 w-3">
@@ -85,6 +85,10 @@ export default function Home() {
                 <span className="text-xs font-medium text-red-400">DÜKKAN KAPALI</span>
               </div>
             )}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/50 border border-white/5 text-zinc-400 text-xs font-medium">
+              <span>📍</span>
+              <span>Oda: <span className="text-white">E21</span></span>
+            </div>
           </div>
         </header>
 
