@@ -238,8 +238,8 @@ export default function CheckoutPage() {
 
                     {paymentMethod === "iban" && (
                         <div className="bg-zinc-900/50 p-3 rounded-lg text-xs text-zinc-400">
-                            <span className="font-bold text-zinc-200">TR12 3456 7890 ...</span>
-                            <p className="mt-1">Siparişi tamamladıktan sonra dekont gösteriniz.</p>
+                            <span className="font-bold text-zinc-200 block text-center mb-1 select-all">TR70 0004 6015 0388 8000 1195 73</span>
+                            <p className="mt-1 text-center font-medium text-primary">Alper ÇETİN</p>
                         </div>
                     )}
                 </div>
