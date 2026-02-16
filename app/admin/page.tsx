@@ -911,6 +911,7 @@ function ProductApproval() {
 function SellerManagement() {
     const [sellers, setSellers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSeller, setSelectedSeller] = useState<any>(null); // For modal
 
     useEffect(() => {
         const fetchSellers = async () => {
@@ -941,7 +942,8 @@ function SellerManagement() {
         }
     };
 
-    const handleStatusUpdate = async (username: string, action: string) => {
+    const handleStatusUpdate = async (username: string, action: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent modal opening
         if (!confirm(`Bu satıcıyı ${action === 'approve' ? 'onaylamak' : action === 'reject' ? 'reddetmek' : 'yasaklamak'} istediğinize emin misiniz?`)) return;
 
         try {
@@ -974,14 +976,19 @@ function SellerManagement() {
                         <th className="px-4 py-3 rounded-l-lg">Kullanıcı</th>
                         <th className="px-4 py-3">Durum</th>
                         <th className="px-4 py-3">Ürün</th>
+                        <th className="px-4 py-3">Satış</th>
                         <th className="px-4 py-3">Tarih</th>
                         <th className="px-4 py-3 rounded-r-lg text-right">İşlem</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                     {sellers.map((seller) => (
-                        <tr key={seller.username} className="hover:bg-zinc-900/30 transition">
-                            <td className="px-4 py-3 font-medium text-white">
+                        <tr
+                            key={seller.username}
+                            className="hover:bg-zinc-900/30 transition cursor-pointer group"
+                            onClick={() => setSelectedSeller(seller)}
+                        >
+                            <td className="px-4 py-3 font-medium text-white group-hover:text-blue-400 transition-colors">
                                 {seller.display_name}
                                 <div className="text-xs text-zinc-600">@{seller.username}</div>
                             </td>
@@ -995,20 +1002,21 @@ function SellerManagement() {
                                 </span>
                             </td>
                             <td className="px-4 py-3">{seller.productCount || 0}</td>
+                            <td className="px-4 py-3 text-white font-bold">{seller.salesCount || 0}</td>
                             <td className="px-4 py-3">
                                 {new Date(seller.joinedAt).toLocaleDateString("tr-TR")}
                             </td>
-                            <td className="px-4 py-3 text-right space-x-2">
+                            <td className="px-4 py-3 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                                 {seller.status === 'pending' && (
                                     <>
                                         <button
-                                            onClick={() => handleStatusUpdate(seller.username, 'approve')}
+                                            onClick={(e) => handleStatusUpdate(seller.username, 'approve', e)}
                                             className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-md text-xs transition"
                                         >
                                             Onayla
                                         </button>
                                         <button
-                                            onClick={() => handleStatusUpdate(seller.username, 'reject')}
+                                            onClick={(e) => handleStatusUpdate(seller.username, 'reject', e)}
                                             className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-md text-xs transition"
                                         >
                                             Reddet
@@ -1017,7 +1025,7 @@ function SellerManagement() {
                                 )}
                                 {seller.status === 'active' && (
                                     <button
-                                        onClick={() => handleStatusUpdate(seller.username, 'ban')}
+                                        onClick={(e) => handleStatusUpdate(seller.username, 'ban', e)}
                                         className="bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1 rounded-md text-xs transition"
                                     >
                                         Yasakla
@@ -1025,7 +1033,7 @@ function SellerManagement() {
                                 )}
                                 {seller.status === 'banned' && (
                                     <button
-                                        onClick={() => handleStatusUpdate(seller.username, 'approve')}
+                                        onClick={(e) => handleStatusUpdate(seller.username, 'approve', e)}
                                         className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-xs transition"
                                     >
                                         Yasağı Kaldır
@@ -1036,6 +1044,49 @@ function SellerManagement() {
                     ))}
                 </tbody>
             </table>
+
+            {/* Seller Details Modal */}
+            {selectedSeller && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setSelectedSeller(null)}>
+                    <div className="glass-card p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold">{selectedSeller.display_name}</h2>
+                                <p className="text-zinc-500">@{selectedSeller.username} • {selectedSeller.productCount} Ürün • {selectedSeller.salesCount} Satış</p>
+                            </div>
+                            <button onClick={() => setSelectedSeller(null)} className="text-zinc-500 hover:text-white text-2xl">✕</button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {selectedSeller.products && selectedSeller.products.length > 0 ? (
+                                selectedSeller.products.map((p: any) => (
+                                    <div key={p.id} className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 flex gap-3 items-center">
+                                        {p.imageUrl ? (
+                                            <img src={p.imageUrl} className="w-12 h-12 object-cover rounded bg-zinc-800" />
+                                        ) : (
+                                            <div className="w-12 h-12 bg-zinc-800 rounded flex items-center justify-center">{p.emoji || "📦"}</div>
+                                        )}
+                                        <div>
+                                            <div className="font-bold text-sm">{p.name}</div>
+                                            <div className="text-xs text-zinc-500">{p.price}₺ • Stok: {p.stock}</div>
+                                            <div className={`text-[10px] mt-1 inline-block px-1.5 py-0.5 rounded ${p.approvalStatus === 'approved' ? 'bg-green-500/20 text-green-500' :
+                                                    p.approvalStatus === 'rejected' ? 'bg-red-500/20 text-red-500' :
+                                                        'bg-yellow-500/20 text-yellow-500'
+                                                }`}>
+                                                {p.approvalStatus === 'approved' ? 'Onaylı' : p.approvalStatus === 'rejected' ? 'Reddedildi' : 'Bekliyor'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-2 text-center text-zinc-500 py-8">
+                                    Bu satıcının henüz ürünü yok.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

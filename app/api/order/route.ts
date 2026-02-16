@@ -100,7 +100,8 @@ export async function POST(request: Request) {
         let totalProfit = 0;
         let serverCalculatedTotal = 0;
 
-        items.forEach((item: any) => {
+        // Enrich items with DB data (especially seller info)
+        const enrichedItems = items.map((item: any) => {
             const product = updatedProducts.find((p: any) => p.id === item.id);
             if (product) {
                 const cost = product.costPrice || 0;
@@ -111,7 +112,15 @@ export async function POST(request: Request) {
                 totalProfit += profitPerItem * item.quantity;
 
                 itemsSummary += `${item.quantity}x ${product.name}, `;
+
+                return {
+                    ...item,
+                    name: product.name,
+                    price: product.price,
+                    seller: product.seller // Add seller info
+                };
             }
+            return item;
         });
 
         // Delivery Fee Logic
@@ -130,7 +139,7 @@ export async function POST(request: Request) {
             id: orderId,
             status: "pending", // pending, approved, rejected
             date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
-            items: items, // Keep full object for restore if needed
+            items: enrichedItems, // Save enriched items with seller info
             itemsSummary: itemsSummary.slice(0, -2),
             total: grandTotal, // Use the SAFE server-calculated total
             profit: totalProfit,

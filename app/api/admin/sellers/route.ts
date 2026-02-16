@@ -11,14 +11,16 @@ export async function GET() {
     }
 
     try {
-        // 2. Fetch All Sellers
-        const sellersData = await dbServer.get("/sellers");
+        // 2. Fetch All Data
+        const [sellersData, productsData, ordersData] = await Promise.all([
+            dbServer.get("/sellers"),
+            dbServer.get("/products"),
+            dbServer.get("/orders")
+        ]);
 
-        if (!sellersData) {
-            return NextResponse.json([]);
-        }
+        if (!sellersData) return NextResponse.json([]);
 
-        // 3. Convert to Array
+        // 3. Process Data
         let sellers = [];
         if (Array.isArray(sellersData)) {
             sellers = sellersData.filter(Boolean);
@@ -26,18 +28,41 @@ export async function GET() {
             sellers = Object.values(sellersData);
         }
 
-        // 4. Filter or Sort (Optional - for now return all so admin can see active ones too)
-        // We might want to sort by joinedAt desc
+        const allProducts = (productsData as any[]) || [];
+        const allOrders = ordersData ? (Array.isArray(ordersData) ? ordersData : Object.values(ordersData)) : [];
+
+        // 4. Sort by joinedAt desc
         sellers.sort((a: any, b: any) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());
 
-        // 5. Sanitize (Remove passwordHash/salt)
-        const safeSellers = sellers.map((s: any) => ({
-            username: s.username,
-            display_name: s.display_name,
-            status: s.status, // pending, active, banned
-            joinedAt: s.joinedAt,
-            productCount: s.products ? s.products.length : 0
-        }));
+        // 5. Aggregate and Map
+        const safeSellers = sellers.map((s: any) => {
+            // Get Seller Products
+            const sellerProducts = allProducts.filter((p: any) => p.seller === s.username);
+
+            // Calculate Sales Count
+            let salesCount = 0;
+            allOrders.forEach((order: any) => {
+                if (order.status !== 'rejected') { // Count active or pending orders
+                    if (order.items && Array.isArray(order.items)) {
+                        order.items.forEach((item: any) => {
+                            if (item.seller === s.username) {
+                                salesCount += item.quantity || 0;
+                            }
+                        });
+                    }
+                }
+            });
+
+            return {
+                username: s.username,
+                display_name: s.display_name,
+                status: s.status,
+                joinedAt: s.joinedAt,
+                productCount: sellerProducts.length,
+                salesCount: salesCount,
+                products: sellerProducts // Send products to frontend for the modal
+            };
+        });
 
         return NextResponse.json(safeSellers);
 
