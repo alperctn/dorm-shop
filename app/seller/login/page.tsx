@@ -38,7 +38,7 @@ export default function SellerLoginPage() {
             // Success
             // router.push("/seller/dashboard"); // Dashboard henüz yok, şimdilik ana sayfaya veya placeholder'a
             alert("Giriş Başarılı!");
-            router.push("/");
+            router.push("/seller/dashboard");
 
         } catch (err) {
             setError("Sunucu hatası.");

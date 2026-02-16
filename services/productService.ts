@@ -10,6 +10,7 @@ export interface Product {
     emoji?: string;
     imageUrl?: string;
     isVisible?: boolean; // New field for hiding products
+    seller?: string; // Username of the seller
 }
 
 export const INITIAL_PRODUCTS: Product[] = [
