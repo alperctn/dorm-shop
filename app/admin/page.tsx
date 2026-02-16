@@ -384,34 +384,58 @@ export default function AdminPage() {
                     </div>
                 </div>
 
-                {/* Heatmap Section */}
-                <div className="glass-card p-6 md:col-span-2">
-                    <h2 className="text-lg font-bold text-zinc-400 mb-4 flex items-center gap-2">
-                        🔥 Satış Yoğunluğu (Saatlik)
-                    </h2>
-                    <HourlySalesChart data={hourlyData} />
-                </div>
+                {/* Recent Sales - Redesigned */}
+                <div className="glass-card p-6 md:col-span-2 overflow-hidden">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            💸 Son Satış Geçmişi
+                        </h2>
+                        <span className="text-xs text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full">{revenue.history.length} İşlem</span>
+                    </div>
 
-                {/* Chart Section */}
-                <div className="glass-card p-6 md:col-span-2">
-                    <h2 className="text-lg font-bold text-zinc-400 mb-4">Satış Grafiği</h2>
-                    <AdminChart data={revenue.history} />
-                </div>
-
-                <div className="glass-card p-6 overflow-y-auto max-h-40">
-                    <h2 className="text-lg font-bold text-zinc-400 mb-2">Son Satışlar</h2>
                     {revenue.history.length === 0 ? (
-                        <p className="text-sm text-zinc-600">Henüz satış yok.</p>
+                        <div className="text-center py-12 text-zinc-500 bg-zinc-900/30 rounded-xl border border-dashed border-white/5">
+                            <span className="text-4xl block mb-2">🛒</span>
+                            Henüz satış kaydı bulunmuyor.
+                        </div>
                     ) : (
-                        <ul className="space-y-2">
-                            {revenue.history.map((sale) => (
-                                <li key={sale.id} className="text-xs border-b border-white/5 pb-1">
-                                    <span className="text-green-400 font-bold">+{sale.total}TL</span>
-                                    <span className="text-zinc-500 mx-2">{sale.date.split(' ')[1]}</span>
-                                    <span className="text-zinc-400 truncate block">{sale.items}</span>
-                                </li>
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {[...revenue.history].reverse().map((sale) => (
+                                <div key={sale.id} className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-zinc-900/50 hover:bg-zinc-900/80 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                                    <div className="flex items-start gap-4">
+                                        <div className="bg-green-500/10 text-green-500 p-3 rounded-lg">
+                                            💰
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-bold text-white text-lg">+{sale.total}₺</span>
+                                                <span className="text-xs text-zinc-500 bg-black/20 px-2 py-0.5 rounded">
+                                                    {new Date(sale.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-zinc-400 line-clamp-2 md:line-clamp-1 max-w-md">
+                                                {sale.items}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between md:justify-end gap-6 pl-14 md:pl-0">
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Tarih</div>
+                                            <div className="text-xs text-zinc-300 font-medium">
+                                                {new Date(sale.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Ödeme</div>
+                                            <div className="text-xs font-bold text-white">
+                                                {sale.id.startsWith('W') ? 'WhatsApp' : 'Web'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     )}
                 </div>
             </div>
