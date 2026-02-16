@@ -79,6 +79,52 @@ export default function SellerDashboard() {
         }
     };
 
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
+
+        try {
+            const res = await fetch("/api/seller/products", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id })
+            });
+
+            if (res.ok) {
+                setProducts(products.filter(p => p.id !== id));
+            } else {
+                alert("Silme işlemi başarısız.");
+            }
+        } catch (error) {
+            console.error("Delete error", error);
+        }
+    };
+
+    const handleUpdateProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProduct) return;
+
+        try {
+            const res = await fetch("/api/seller/products", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editingProduct)
+            });
+
+            if (res.ok) {
+                alert("Ürün güncellendi! Onay için tekrar beklemeniz gerekecek.");
+                setEditingProduct(null);
+                const refreshRes = await fetch("/api/seller/products");
+                if (refreshRes.ok) setProducts(await refreshRes.json());
+            } else {
+                alert("Güncelleme başarısız.");
+            }
+        } catch (error) {
+            console.error("Update error", error);
+        }
+    };
+
     const handleLogout = async () => {
         // Implement logout logic here (e.g., clear cookie via API)
         // For now, we can just redirect to login which effectively logs out due to session check
@@ -114,11 +160,11 @@ export default function SellerDashboard() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {products.map((product) => (
-                                <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition relative overflow-hidden">
+                                <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition relative overflow-hidden group">
                                     {/* Status Badge */}
-                                    <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg ${product.approvalStatus === 'approved' ? 'bg-green-500 text-black' :
-                                        product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
-                                            'bg-yellow-500 text-black'
+                                    <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg z-10 ${product.approvalStatus === 'approved' ? 'bg-green-500 text-black' :
+                                            product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
+                                                'bg-yellow-500 text-black'
                                         }`}>
                                         {product.approvalStatus === 'approved' ? 'ONAYLANDI' :
                                             product.approvalStatus === 'rejected' ? 'REDDEDİLDİ' :
@@ -130,15 +176,28 @@ export default function SellerDashboard() {
                                     ) : (
                                         <div className="w-16 h-16 bg-zinc-800 rounded-lg flex items-center justify-center text-2xl">📦</div>
                                     )}
-                                    <div>
-                                        <h3 className="font-bold text-lg">{product.name}</h3>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-lg truncate">{product.name}</h3>
                                         <div className="text-zinc-400 text-sm flex gap-3">
                                             <span>💰 {product.price}₺</span>
-                                            <span>📦 Stok: {product.stock}</span>
+                                            <span>📦 {product.stock}</span>
                                         </div>
                                     </div>
-                                    <div className="ml-auto pt-6">
-                                        <span className="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-400 uppercase">{product.category}</span>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col gap-2 ml-2">
+                                        <button
+                                            onClick={() => setEditingProduct(product)}
+                                            className="text-xs bg-zinc-800 hover:bg-blue-600 hover:text-white px-2 py-1 rounded transition"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(product.id)}
+                                            className="text-xs bg-zinc-800 hover:bg-red-600 hover:text-white px-2 py-1 rounded transition"
+                                        >
+                                            🗑️
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -241,6 +300,57 @@ export default function SellerDashboard() {
                     </form>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingProduct && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setEditingProduct(null)}>
+                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setEditingProduct(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">✕</button>
+                        <h2 className="text-xl font-bold mb-4">Ürün Düzenle</h2>
+
+                        <form onSubmit={handleUpdateProduct} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-zinc-500 mb-1">Ürün Adı</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editingProduct.name}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                    className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs text-zinc-500 mb-1">Fiyat (₺)</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={editingProduct.price}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                                        className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-zinc-500 mb-1">Stok</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={editingProduct.stock}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
+                                        className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition"
+                            >
+                                Güncelle
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
