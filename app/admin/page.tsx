@@ -580,31 +580,50 @@ export default function AdminPage() {
                                 if (categoryProducts.length === 0) return null;
 
                                 return (
-                                    <div key={category.id} className="space-y-3">
-                                        <h3 className="text-lg font-bold text-zinc-400 border-b border-white/5 pb-1 sticky top-0 bg-[#18181b]/80 backdrop-blur-sm z-10">
-                                            {category.name}
+                                    <div key={category.id} className="mb-8">
+                                        <h3 className="text-lg font-bold text-zinc-400 border-b border-white/5 pb-2 mb-4 sticky top-0 bg-[#18181b]/95 backdrop-blur-sm z-10 flex items-center gap-2">
+                                            <span className="text-primary">#</span> {category.name}
+                                            <span className="text-xs font-normal text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded-full ml-auto">{categoryProducts.length} Ürün</span>
                                         </h3>
-                                        {categoryProducts.map((product) => (
-                                            <div key={product.id} className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-white/10 transition">
-                                                <div>
-                                                    <h4 className="font-semibold">{product.name}</h4>
-                                                    <div className="flex gap-2 text-xs text-zinc-500">
-                                                        <span>Satış: {product.price}₺</span>
-                                                        {product.costPrice && <span className="text-yellow-600">• Maliyet: {product.costPrice}₺</span>}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {categoryProducts.map((product) => (
+                                                <div key={product.id} className="flex flex-col justify-between p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-primary/30 transition group">
+                                                    <div>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h4 className="font-semibold text-zinc-200 line-clamp-1" title={product.name}>{product.name}</h4>
+                                                            <div className="flex gap-1">
+                                                                <button
+                                                                    onClick={() => setEditingProduct(product)}
+                                                                    className="text-blue-500 bg-blue-500/10 p-1.5 rounded hover:bg-blue-500/20 transition opacity-0 group-hover:opacity-100"
+                                                                    title="Düzenle"
+                                                                >
+                                                                    ✏️
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteProduct(product.id)}
+                                                                    className="text-red-500 bg-red-500/10 p-1.5 rounded hover:bg-red-500/20 transition opacity-0 group-hover:opacity-100"
+                                                                    title="Sil"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs text-zinc-500 mb-4">
+                                                            <span className="bg-zinc-800 px-2 py-0.5 rounded">{product.price}₺</span>
+                                                            {product.costPrice && <span className="bg-yellow-900/20 text-yellow-600 px-2 py-0.5 rounded">Maliyet: {product.costPrice}₺</span>}
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex flex-col items-end">
-                                                        <label className="text-[10px] text-zinc-500 mb-1">Stok Adedi</label>
-                                                        <input
-                                                            type="number"
-                                                            value={product.stock}
-                                                            onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                                            className="w-20 bg-black/50 border border-zinc-700 rounded-lg p-2 text-center text-primary font-bold focus:outline-none focus:border-primary"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
+                                                    <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-auto">
+                                                        <div className="flex items-center gap-2">
+                                                            <label className="text-[10px] text-zinc-500">Stok:</label>
+                                                            <input
+                                                                type="number"
+                                                                value={product.stock}
+                                                                onChange={(e) => handleStockChange(product.id, e.target.value)}
+                                                                className="w-16 bg-black/50 border border-zinc-700 rounded-lg p-1 text-center text-primary font-bold text-sm focus:outline-none focus:border-primary"
+                                                            />
+                                                        </div>
                                                         <button
                                                             onClick={async () => {
                                                                 const updated = products.map(p =>
@@ -613,29 +632,14 @@ export default function AdminPage() {
                                                                 setProducts(updated);
                                                                 await saveProducts(updated);
                                                             }}
-                                                            className={`p-2 rounded-lg transition ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                                                            title={product.isVisible === false ? "Ürünü Göster" : "Ürünü Gizle"}
+                                                            className={`text-xs px-2 py-1 rounded transition ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500' : 'bg-green-500/10 text-green-500'}`}
                                                         >
-                                                            {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setEditingProduct(product)}
-                                                            className="bg-blue-500/10 text-blue-500 p-2 rounded-lg hover:bg-blue-500/20 transition"
-                                                            title="Düzenle"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteProduct(product.id)}
-                                                            className="bg-red-500/10 text-red-500 p-2 rounded-lg hover:bg-red-500/20 transition"
-                                                            title="Ürünü Sil"
-                                                        >
-                                                            🗑️
+                                                            {product.isVisible === false ? "Gizli 👁️‍🗨️" : "Yayında 👁️"}
                                                         </button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 );
                             })
