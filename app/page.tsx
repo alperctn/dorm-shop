@@ -29,6 +29,14 @@ export default function Home() {
       color: "from-zinc-500/20 to-zinc-700/20",
       border: "hover:border-zinc-500/50"
     },
+    {
+      id: "yurt-ihtiyaclari",
+      name: "Yurt İhtiyaçları",
+      emoji: "🧴",
+      description: "Kişisel bakım, temizlik ve diğer ihtiyaçlar.",
+      color: "from-purple-500/20 to-pink-500/20",
+      border: "hover:border-purple-500/50"
+    },
   ];
 
   /* Dükkan Durumu */
