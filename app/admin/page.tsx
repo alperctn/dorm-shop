@@ -792,9 +792,139 @@ export default function AdminPage() {
                             </button>
                         </form>
                     </div>
+            )}
                 </div>
-            )
+            );
+}
+
+            function SellerManagement() {
+    const [sellers, setSellers] = useState<any[]>([]);
+            const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSellers = async () => {
+            try {
+                const res = await fetch("/api/admin/sellers");
+            if (res.ok) {
+                    const data = await res.json();
+            setSellers(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch sellers", error);
+            } finally {
+                setLoading(false);
             }
-        </div >
-    );
+        };
+            fetchSellers();
+    }, []);
+
+    const fetchSellers = async () => {
+         try {
+            const res = await fetch("/api/admin/sellers");
+            if (res.ok) {
+                const data = await res.json();
+            setSellers(data);
+            }
+        } catch (error) {
+                console.error("Failed to fetch sellers", error);
+        }
+    };
+
+    const handleStatusUpdate = async (username: string, action: string) => {
+        if (!confirm(`Bu satıcıyı ${action === 'approve' ? 'onaylamak' : action === 'reject' ? 'reddetmek' : 'yasaklamak'} istediğinize emin misiniz?`)) return;
+
+            try {
+            const res = await fetch("/api/admin/sellers/update", {
+                method: "POST",
+            headers: {"Content-Type": "application/json" },
+            body: JSON.stringify({username, action})
+            });
+
+            if (res.ok) {
+                alert("İşlem başarılı.");
+            fetchSellers();
+            } else {
+                alert("Bir hata oluştu.");
+            }
+        } catch (error) {
+                console.error("Update error", error);
+        }
+    };
+
+            if (loading) return <div className="text-zinc-500">Yükleniyor...</div>;
+
+            if (sellers.length === 0) return <div className="text-zinc-500">Henüz satıcı başvurusu yok.</div>;
+
+            return (
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-zinc-400">
+                    <thead className="text-xs uppercase bg-zinc-900/50 text-zinc-300">
+                        <tr>
+                            <th className="px-4 py-3 rounded-l-lg">Kullanıcı</th>
+                            <th className="px-4 py-3">Durum</th>
+                            <th className="px-4 py-3">Ürün</th>
+                            <th className="px-4 py-3">Tarih</th>
+                            <th className="px-4 py-3 rounded-r-lg text-right">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                        {sellers.map((seller) => (
+                            <tr key={seller.username} className="hover:bg-zinc-900/30 transition">
+                                <td className="px-4 py-3 font-medium text-white">
+                                    {seller.display_name}
+                                    <div className="text-xs text-zinc-600">@{seller.username}</div>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${seller.status === 'active' ? 'bg-green-500/10 text-green-500' :
+                                        seller.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
+                                            'bg-red-500/10 text-red-500'
+                                        }`}>
+                                        {seller.status === 'active' ? 'Aktif' :
+                                            seller.status === 'pending' ? 'Bekliyor' : 'Pasif'}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">{seller.productCount || 0}</td>
+                                <td className="px-4 py-3">
+                                    {new Date(seller.joinedAt).toLocaleDateString("tr-TR")}
+                                </td>
+                                <td className="px-4 py-3 text-right space-x-2">
+                                    {seller.status === 'pending' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleStatusUpdate(seller.username, 'approve')}
+                                                className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-md text-xs transition"
+                                            >
+                                                Onayla
+                                            </button>
+                                            <button
+                                                onClick={() => handleStatusUpdate(seller.username, 'reject')}
+                                                className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-md text-xs transition"
+                                            >
+                                                Reddet
+                                            </button>
+                                        </>
+                                    )}
+                                    {seller.status === 'active' && (
+                                        <button
+                                            onClick={() => handleStatusUpdate(seller.username, 'ban')}
+                                            className="bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1 rounded-md text-xs transition"
+                                        >
+                                            Yasakla
+                                        </button>
+                                    )}
+                                    {seller.status === 'banned' && (
+                                        <button
+                                            onClick={() => handleStatusUpdate(seller.username, 'approve')}
+                                            className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-xs transition"
+                                        >
+                                            Yasağı Kaldır
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            );
 }
