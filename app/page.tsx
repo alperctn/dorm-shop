@@ -138,18 +138,21 @@ export default function Home() {
           </Link>
 
           {/* Sell Application (Coming Soon) */}
-          <div className="glass-card p-8 group border border-white/5 flex flex-col items-center text-center relative overflow-hidden opacity-80">
+          <div className="glass-card p-8 group border border-white/5 flex flex-col items-center text-center relative overflow-hidden">
             <div className="absolute top-3 right-3 bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
-              ÇOK YAKINDA
+              YENİ
             </div>
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-lg mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
               🤝
             </div>
             <h2 className="text-xl font-bold text-zinc-100 mb-1">Ben de Satmak İstiyorum</h2>
             <p className="text-zinc-500 text-sm mb-3">Kendi ürünlerini burada sat.</p>
-            <div className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-900/50 text-zinc-500 border border-zinc-700/50 cursor-not-allowed">
-              Başvuru Kapalı
-            </div>
+            <Link
+              href="/seller/login"
+              className="text-xs font-bold px-4 py-2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700 hover:border-zinc-500 transition-colors"
+            >
+              Satıcı Girişi
+            </Link>
           </div>
         </div>
 
