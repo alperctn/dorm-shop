@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function CartFab() {
     const { totalItems, totalPrice } = useCart();
@@ -13,7 +14,9 @@ export function CartFab() {
         setIsVisible(true);
     }, []);
 
-    if (!isVisible || totalItems === 0) return null;
+    const pathname = usePathname();
+
+    if (!isVisible || totalItems === 0 || pathname === "/checkout") return null;
 
     return (
         <Link
