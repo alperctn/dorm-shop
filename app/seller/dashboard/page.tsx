@@ -13,6 +13,7 @@ interface Product {
     category: string;
     imageUrl?: string;
     seller?: string;
+    approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export default function SellerDashboard() {
@@ -59,9 +60,10 @@ export default function SellerDashboard() {
             });
 
             if (res.ok) {
-                alert("Ürün başarıyla eklendi! 📦");
+                alert("Ürün başarıyla eklendi! Yönetici onayı sonrası listelenecektir. ⏳");
                 const savedProduct = await res.json();
-                // Re-fetch or update local state
+
+                // Refresh list
                 const refreshRes = await fetch("/api/seller/products");
                 if (refreshRes.ok) setProducts(await refreshRes.json());
 
@@ -112,7 +114,17 @@ export default function SellerDashboard() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {products.map((product) => (
-                                <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition">
+                                <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition relative overflow-hidden">
+                                    {/* Status Badge */}
+                                    <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg ${product.approvalStatus === 'approved' ? 'bg-green-500 text-black' :
+                                            product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
+                                                'bg-yellow-500 text-black'
+                                        }`}>
+                                        {product.approvalStatus === 'approved' ? 'ONAYLANDI' :
+                                            product.approvalStatus === 'rejected' ? 'REDDEDİLDİ' :
+                                                'BEKLİYOR'}
+                                    </div>
+
                                     {product.imageUrl ? (
                                         <img src={product.imageUrl} alt={product.name} className="w-16 h-16 object-cover rounded-lg bg-zinc-800" />
                                     ) : (
@@ -125,7 +137,7 @@ export default function SellerDashboard() {
                                             <span>📦 Stok: {product.stock}</span>
                                         </div>
                                     </div>
-                                    <div className="ml-auto">
+                                    <div className="ml-auto pt-6">
                                         <span className="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-400 uppercase">{product.category}</span>
                                     </div>
                                 </div>

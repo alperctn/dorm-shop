@@ -14,7 +14,8 @@ export async function GET() {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const username = sellerSession.value;
+    // Extract username from "username:timestamp" format
+    const username = sellerSession.value.split(':')[0];
 
     try {
         const allProducts = (await dbServer.get("/products")) as Product[] || [];
@@ -34,7 +35,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const username = sellerSession.value;
+    // Extract username from "username:timestamp" format
+    const username = sellerSession.value.split(':')[0];
 
     try {
         const body = await request.json();
