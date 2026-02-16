@@ -10,6 +10,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     { id: "cat_1", name: "Yiyecekler", slug: "yiyecekler" },
     { id: "cat_2", name: "İçecekler", slug: "icecekler" },
     { id: "cat_3", name: "Sigara", slug: "sigara" },
+    { id: "cat_4", name: "Yurt İhtiyaçları", slug: "yurt-ihtiyaclari" },
 ];
 
 export const fetchCategories = async (): Promise<Category[]> => {
@@ -21,11 +22,26 @@ export const fetchCategories = async (): Promise<Category[]> => {
         return INITIAL_CATEGORIES;
     }
 
-    // If data is array
-    if (Array.isArray(data)) return data.filter(Boolean);
+    let categories: Category[] = [];
 
-    // If data is object (Firebase formatted), convert to array
-    return Object.values(data);
+    // If data is array
+    if (Array.isArray(data)) {
+        categories = data.filter(Boolean);
+    } else {
+        // If data is object (Firebase formatted), convert to array
+        categories = Object.values(data);
+    }
+
+    // Auto-migrate: Check if "Yurt İhtiyaçları" exists, if not add it
+    const yurtCatExists = categories.some(c => c.slug === "yurt-ihtiyaclari");
+    if (!yurtCatExists) {
+        const newCat = { id: "cat_4", name: "Yurt İhtiyaçları", slug: "yurt-ihtiyaclari" };
+        categories.push(newCat);
+        // Save back to DB to persist
+        await db.put("/categories", categories);
+    }
+
+    return categories;
 };
 
 export const addCategory = async (name: string) => {
