@@ -47,13 +47,13 @@ export default function MarketplacePage() {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <Link href="/" className="text-zinc-400 hover:text-white text-xl">←</Link>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
-                            Öğrenci Pazarı 🤝
-                        </h1>
-                    </div>
-                    <p className="text-zinc-500 text-sm mt-1 ml-6">Öğrencilerin sattığı ürünleri buradan keşfet.</p>
+                    <Link href="/" className="text-zinc-400 hover:text-white flex items-center gap-2 mb-2 text-sm transition-colors">
+                        ← Mağazaya Dön
+                    </Link>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
+                        Öğrenci Pazarı 🤝
+                    </h1>
+                    <p className="text-zinc-500 text-sm mt-1">Öğrencilerin sattığı ürünleri buradan keşfet.</p>
                 </div>
 
                 <div className="flex gap-3">
