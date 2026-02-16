@@ -28,11 +28,9 @@ export default function MarketplacePage() {
                     // If regular admin items are also 'market' items, they should be shown.
                     // I will filter to show ONLY items that have a 'seller' field to distinguish "user sellers" from "admin store".
                     // OR if the user wants to see EVERYTHING, I'll show everything.
-                    // "satıcı ürünleri listelensin" implies products added by sellers.
-
-
-                    // Filter: Show Admin items (no seller) OR Approved Seller items
-                    const displayProducts = data.filter(p => !p.seller || p.approvalStatus === 'approved');
+                    // "satıcı ürünleri listelensin" implies products added                    
+                    // Filter: Show ONLY Approved Seller items (Exclude admin items)
+                    const displayProducts = data.filter(p => p.seller && p.approvalStatus === 'approved');
                     setProducts(displayProducts);
                 }
             } catch (error) {
