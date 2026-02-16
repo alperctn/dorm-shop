@@ -20,7 +20,7 @@ export default function SellerDashboard() {
     const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "", category: "yiyecekler", imageUrl: "" });
+    const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "", category: "diger", imageUrl: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -67,7 +67,7 @@ export default function SellerDashboard() {
                 const refreshRes = await fetch("/api/seller/products");
                 if (refreshRes.ok) setProducts(await refreshRes.json());
 
-                setNewProduct({ name: "", price: "", stock: "", category: "yiyecekler", imageUrl: "" });
+                setNewProduct({ name: "", price: "", stock: "", category: "diger", imageUrl: "" });
             } else {
                 alert("Ürün eklenirken bir hata oluştu.");
             }
@@ -117,8 +117,8 @@ export default function SellerDashboard() {
                                 <div key={product.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center hover:border-purple-500/30 transition relative overflow-hidden">
                                     {/* Status Badge */}
                                     <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg ${product.approvalStatus === 'approved' ? 'bg-green-500 text-black' :
-                                            product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
-                                                'bg-yellow-500 text-black'
+                                        product.approvalStatus === 'rejected' ? 'bg-red-500 text-white' :
+                                            'bg-yellow-500 text-black'
                                         }`}>
                                         {product.approvalStatus === 'approved' ? 'ONAYLANDI' :
                                             product.approvalStatus === 'rejected' ? 'REDDEDİLDİ' :
@@ -193,9 +193,6 @@ export default function SellerDashboard() {
                                 onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                                 className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
                             >
-                                <option value="yiyecekler">Yiyecekler</option>
-                                <option value="icecekler">İçecekler</option>
-                                <option value="yurt-ihtiyaclari">Yurt İhtiyaçları</option>
                                 <option value="diger">Diğer</option>
                             </select>
                         </div>
