@@ -285,6 +285,15 @@ export default function AdminPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Seller Management Section */}
+                <div className="glass-card p-6 md:col-span-2 mt-6">
+                    <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
+                        🤝 Satıcı Başvuruları & Yönetimi
+                    </h2>
+
+                    <SellerManagement />
+                </div>
                 <p className="text-xs text-center mt-4 text-zinc-500">
                     Paket servisi kapatıldığında müşteriler sadece "Gel-Al" seçeneğini kullanabilir.
                 </p>
