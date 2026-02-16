@@ -794,6 +794,24 @@ export default function AdminPage() {
                     </div>
                 </div>
             )}
+
+            {/* Product Approval Section */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-8 mt-8">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                    <span className="bg-yellow-500/20 text-yellow-500 p-2 rounded-lg">⏳</span>
+                    Bekleyen Ürün Onayları
+                </h2>
+                <ProductApproval />
+            </div>
+
+            {/* Seller Management Section */}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-8">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                    <span className="bg-purple-500/20 text-purple-500 p-2 rounded-lg">👥</span>
+                    Satıcı Yönetimi
+                </h2>
+                <SellerManagement />
+            </div>
         </div>
     );
 }
