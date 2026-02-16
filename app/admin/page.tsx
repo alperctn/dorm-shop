@@ -571,61 +571,75 @@ export default function AdminPage() {
                         📦 Stok Takibi
                     </h2>
 
-                    <div className="space-y-4">
+                    <div className="space-y-8">
                         {products.length === 0 ? (
                             <p className="text-zinc-500 text-center py-4">Loading products...</p>
-                        ) : products.map((product) => (
-                            <div key={product.id} className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-xl border border-white/5">
-                                <div>
-                                    <h3 className="font-semibold">{product.name}</h3>
-                                    <div className="flex gap-2 text-xs text-zinc-500">
-                                        <span className="uppercase">{product.category}</span>
-                                        <span>•</span>
-                                        <span>Satış: {product.price}₺</span>
-                                        {product.costPrice && <span className="text-yellow-600">• Maliyet: {product.costPrice}₺</span>}
-                                    </div>
-                                </div>
+                        ) : (
+                            categories.map(category => {
+                                const categoryProducts = products.filter(p => p.category === category.slug);
+                                if (categoryProducts.length === 0) return null;
 
-                                <div className="flex items-center gap-4">
-                                    <div className="flex flex-col items-end">
-                                        <label className="text-[10px] text-zinc-500 mb-1">Stok Adedi</label>
-                                        <input
-                                            type="number"
-                                            value={product.stock}
-                                            onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                            className="w-20 bg-black/50 border border-zinc-700 rounded-lg p-2 text-center text-primary font-bold focus:outline-none focus:border-primary"
-                                        />
+                                return (
+                                    <div key={category.id} className="space-y-3">
+                                        <h3 className="text-lg font-bold text-zinc-400 border-b border-white/5 pb-1 sticky top-0 bg-[#18181b]/80 backdrop-blur-sm z-10">
+                                            {category.name}
+                                        </h3>
+                                        {categoryProducts.map((product) => (
+                                            <div key={product.id} className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-white/10 transition">
+                                                <div>
+                                                    <h4 className="font-semibold">{product.name}</h4>
+                                                    <div className="flex gap-2 text-xs text-zinc-500">
+                                                        <span>Satış: {product.price}₺</span>
+                                                        {product.costPrice && <span className="text-yellow-600">• Maliyet: {product.costPrice}₺</span>}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex flex-col items-end">
+                                                        <label className="text-[10px] text-zinc-500 mb-1">Stok Adedi</label>
+                                                        <input
+                                                            type="number"
+                                                            value={product.stock}
+                                                            onChange={(e) => handleStockChange(product.id, e.target.value)}
+                                                            className="w-20 bg-black/50 border border-zinc-700 rounded-lg p-2 text-center text-primary font-bold focus:outline-none focus:border-primary"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={async () => {
+                                                                const updated = products.map(p =>
+                                                                    p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
+                                                                );
+                                                                setProducts(updated);
+                                                                await saveProducts(updated);
+                                                            }}
+                                                            className={`p-2 rounded-lg transition ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
+                                                            title={product.isVisible === false ? "Ürünü Göster" : "Ürünü Gizle"}
+                                                        >
+                                                            {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditingProduct(product)}
+                                                            className="bg-blue-500/10 text-blue-500 p-2 rounded-lg hover:bg-blue-500/20 transition"
+                                                            title="Düzenle"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProduct(product.id)}
+                                                            className="bg-red-500/10 text-red-500 p-2 rounded-lg hover:bg-red-500/20 transition"
+                                                            title="Ürünü Sil"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <button
-                                        onClick={async () => {
-                                            const updated = products.map(p =>
-                                                p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
-                                            );
-                                            setProducts(updated);
-                                            await saveProducts(updated);
-                                        }}
-                                        className={`p-2 rounded-lg transition mr-2 ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700' : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'}`}
-                                        title={product.isVisible === false ? "Ürünü Göster" : "Ürünü Gizle"}
-                                    >
-                                        {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingProduct(product)}
-                                        className="bg-blue-500/10 text-blue-500 p-2 rounded-lg hover:bg-blue-500/20 transition mr-2"
-                                        title="Düzenle"
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteProduct(product.id)}
-                                        className="bg-red-500/10 text-red-500 p-2 rounded-lg hover:bg-red-500/20 transition"
-                                        title="Ürünü Sil"
-                                    >
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>
