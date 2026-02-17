@@ -635,6 +635,56 @@ export default function AdminPage() {
                                                             <h4 className="font-semibold text-zinc-200 line-clamp-1" title={product.name}>{product.name}</h4>
                                                             <div className="flex gap-1">
                                                                 <button
+                                                                    onClick={() => {
+                                                                        const index = products.findIndex(p => p.id === product.id);
+                                                                        // Find previous product in the SAME category
+                                                                        let targetIndex = -1;
+                                                                        for (let i = index - 1; i >= 0; i--) {
+                                                                            if (products[i].category === product.category) {
+                                                                                targetIndex = i;
+                                                                                break;
+                                                                            }
+                                                                        }
+
+                                                                        if (targetIndex !== -1) {
+                                                                            const newProducts = [...products];
+                                                                            // Swap
+                                                                            [newProducts[targetIndex], newProducts[index]] = [newProducts[index], newProducts[targetIndex]];
+                                                                            setProducts(newProducts);
+                                                                            saveProducts(newProducts);
+                                                                        }
+                                                                    }}
+                                                                    className="text-zinc-400 bg-zinc-800 p-1.5 rounded hover:bg-zinc-700 transition opacity-0 group-hover:opacity-100"
+                                                                    title="Yukarı Taşı"
+                                                                >
+                                                                    ⬆️
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const index = products.findIndex(p => p.id === product.id);
+                                                                        // Find next product in the SAME category
+                                                                        let targetIndex = -1;
+                                                                        for (let i = index + 1; i < products.length; i++) {
+                                                                            if (products[i].category === product.category) {
+                                                                                targetIndex = i;
+                                                                                break;
+                                                                            }
+                                                                        }
+
+                                                                        if (targetIndex !== -1) {
+                                                                            const newProducts = [...products];
+                                                                            // Swap
+                                                                            [newProducts[targetIndex], newProducts[index]] = [newProducts[index], newProducts[targetIndex]];
+                                                                            setProducts(newProducts);
+                                                                            saveProducts(newProducts);
+                                                                        }
+                                                                    }}
+                                                                    className="text-zinc-400 bg-zinc-800 p-1.5 rounded hover:bg-zinc-700 transition opacity-0 group-hover:opacity-100"
+                                                                    title="Aşağı Taşı"
+                                                                >
+                                                                    ⬇️
+                                                                </button>
+                                                                <button
                                                                     onClick={() => setEditingProduct(product)}
                                                                     className="text-blue-500 bg-blue-500/10 p-1.5 rounded hover:bg-blue-500/20 transition opacity-0 group-hover:opacity-100"
                                                                     title="Düzenle"
