@@ -73,7 +73,14 @@ export default function CheckoutPage() {
         const opts = sellerOptions[seller];
         if (!opts) return productTotal; // Should not happen after init
 
-        const fee = opts.delivery === "delivery" ? (productTotal >= 150 ? 0 : deliveryFee) : 0;
+        let fee = 0;
+        if (opts.delivery === "delivery") {
+            if (seller === 'admin') {
+                fee = productTotal >= 150 ? 0 : deliveryFee;
+            } else {
+                fee = 0;
+            }
+        }
         return productTotal + fee;
     };
 
@@ -105,7 +112,15 @@ export default function CheckoutPage() {
                 // Recalc total for this chunk only to send valid data
                 // Backend will verify again
                 const chunkProductTotal = sellerItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-                const fee = opts.delivery === "delivery" ? (chunkProductTotal >= 150 ? 0 : deliveryFee) : 0;
+
+                let fee = 0;
+                if (opts.delivery === "delivery") {
+                    if (seller === 'admin') {
+                        fee = chunkProductTotal >= 150 ? 0 : deliveryFee;
+                    } else {
+                        fee = 0;
+                    }
+                }
 
                 return {
                     seller: seller, // Pass seller explicitly
@@ -253,8 +268,14 @@ export default function CheckoutPage() {
                                             disabled={!deliveryAvailable}
                                             className={`p-2 rounded-lg border text-left transition ${!deliveryAvailable ? 'opacity-30' : opts.delivery === 'delivery' ? 'bg-white/10 border-white text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
                                         >
-                                            <div className="text-xs font-bold">🚪 Odaya (+{deliveryFee}₺)</div>
-                                            <div className="text-[9px] text-zinc-500">150₺ üzeri ücretsiz</div>
+                                            {seller === 'admin' ? (
+                                                <>
+                                                    <div className="text-xs font-bold">🚪 Odaya (+{deliveryFee}₺)</div>
+                                                    <div className="text-[9px] text-zinc-500">150₺ üzeri ücretsiz</div>
+                                                </>
+                                            ) : (
+                                                <div className="text-xs font-bold">🚪 Odaya (Ücretsiz)</div>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
