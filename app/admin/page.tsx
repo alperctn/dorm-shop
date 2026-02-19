@@ -21,7 +21,6 @@ export default function AdminPage() {
     const [visitors, setVisitors] = useState<{ date: string, count: number }[]>([]);
     const [orders, setOrders] = useState<any[]>([]); // New Order State
     const [categories, setCategories] = useState<Category[]>([]);
-    const [newProduct, setNewProduct] = useState({ name: "", price: "", costPrice: "", stock: "", category: "", imageUrl: "" });
     const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State for editing
     const [hourlyData, setHourlyData] = useState<{ hour: string, count: number }[]>([]);
     const [isShopOpen, setIsShopOpen] = useState(true);
@@ -36,9 +35,6 @@ export default function AdminPage() {
             ]);
             setProducts(prodData);
             setCategories(catData);
-            if (catData.length > 0) {
-                setNewProduct(prev => ({ ...prev, category: catData[0].slug }));
-            }
 
             // Fetch Real Revenue from Server
             try {
@@ -146,28 +142,6 @@ export default function AdminPage() {
         }
     };
 
-    const handleAddProduct = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        const product: Product = {
-            id,
-            name: newProduct.name,
-            price: Number(newProduct.price),
-            costPrice: Number(newProduct.costPrice),
-            stock: Number(newProduct.stock),
-            category: newProduct.category,
-            emoji: "📦",
-            imageUrl: newProduct.imageUrl,
-            isVisible: true // Default visible
-        };
-        const updatedProducts = [...products, product];
-        setProducts(updatedProducts);
-        await saveProducts(updatedProducts);
-
-        setNewProduct({ name: "", price: "", costPrice: "", stock: "", category: categories[0]?.slug || "yiyecekler", imageUrl: "" });
-        alert("Ürün eklendi!");
-    };
-
     const handleUpdateProduct = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingProduct) return;
@@ -232,14 +206,20 @@ export default function AdminPage() {
                     Yönetici Paneli 🛠️
                 </h1>
                 <div className="flex items-center gap-4">
-                    <span className="text-xs text-zinc-500">Yönetici</span>
+                    <Link
+                        href="/admin/add-product"
+                        className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold hover:opacity-90 transition shadow-lg shadow-primary/20 flex items-center gap-2"
+                    >
+                        <span>➕</span>
+                        <span className="hidden md:inline">Yeni Ürün Ekle</span>
+                    </Link>
                     <Link href="/" className="text-sm text-zinc-400 hover:text-white underline">
                         Dükkana Dön
                     </Link>
                 </div>
             </header>
 
-            {/* Hardware Control */}
+            {/* Hardware Control & Status */}
             <div className="glass-card p-6 mb-8">
                 <h2 className="text-xl font-semibold mb-4">Mekan & Servis Durumu</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -286,14 +266,7 @@ export default function AdminPage() {
                     </div>
                 </div>
 
-                {/* Seller Management Section */}
-                <div className="glass-card p-6 md:col-span-2 mt-6">
-                    <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
-                        🤝 Satıcı Başvuruları & Yönetimi
-                    </h2>
 
-                    <SellerManagement />
-                </div>
                 <p className="text-xs text-center mt-4 text-zinc-500">
                     Paket servisi kapatıldığında müşteriler sadece "Gel-Al" seçeneğini kullanabilir.
                 </p>
@@ -307,7 +280,10 @@ export default function AdminPage() {
                 </h2>
 
                 {orders.filter(o => o.status === 'pending').length === 0 ? (
-                    <p className="text-zinc-500 text-sm">Bekleyen sipariş yok.</p>
+                    <div className="text-center py-8 text-zinc-500 border border-dashed border-white/10 rounded-xl">
+                        <span className="text-2xl block mb-2">😴</span>
+                        Bekleyen sipariş yok.
+                    </div>
                 ) : (
                     <div className="space-y-4">
                         {orders.filter(o => o.status === 'pending').map((order) => (
@@ -346,7 +322,7 @@ export default function AdminPage() {
                 )}
             </div>
 
-            {/* Revenue Dashboard */}
+            {/* Revenue & Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="glass-card p-6 border-l-4 border-green-500 relative">
                     <h2 className="text-lg font-bold text-zinc-400 mb-2">Toplam Ciro</h2>
@@ -401,61 +377,6 @@ export default function AdminPage() {
                         <VisitorChart data={[...visitors].slice(0, 7).reverse()} />
                     </div>
                 </div>
-
-                {/* Recent Sales - Redesigned */}
-                <div className="glass-card p-6 md:col-span-2 overflow-hidden">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                            💸 Son Satış Geçmişi
-                        </h2>
-                        <span className="text-xs text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full">{revenue.history.length} İşlem</span>
-                    </div>
-
-                    {revenue.history.length === 0 ? (
-                        <div className="text-center py-12 text-zinc-500 bg-zinc-900/30 rounded-xl border border-dashed border-white/5">
-                            <span className="text-4xl block mb-2">🛒</span>
-                            Henüz satış kaydı bulunmuyor.
-                        </div>
-                    ) : (
-                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                            {[...revenue.history].reverse().map((sale) => (
-                                <div key={sale.id} className="group relative flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-zinc-900/50 hover:bg-zinc-900/80 rounded-xl border border-white/5 hover:border-white/10 transition-all">
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-green-500/10 text-green-500 p-3 rounded-lg">
-                                            💰
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-white text-lg">+{sale.total}₺</span>
-                                                <span className="text-xs text-zinc-500 bg-black/20 px-2 py-0.5 rounded">
-                                                    {new Date(sale.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-zinc-400 line-clamp-2 md:line-clamp-1 max-w-md">
-                                                {sale.items}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between md:justify-end gap-6 pl-14 md:pl-0">
-                                        <div className="text-right">
-                                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Tarih</div>
-                                            <div className="text-xs text-zinc-300 font-medium">
-                                                {new Date(sale.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Ödeme</div>
-                                            <div className="text-xs font-bold text-white">
-                                                {sale.id.startsWith('W') ? 'WhatsApp' : 'Web'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
             </div>
 
             <div className="flex justify-end mb-6">
@@ -472,138 +393,6 @@ export default function AdminPage() {
 
 
             <div className="grid gap-6 md:grid-cols-2">
-                {/* Add New Product Form */}
-                <div className="glass-card p-6 md:col-span-2">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        ➕ Yeni Ürün Ekle
-                    </h2>
-                    <form onSubmit={handleAddProduct} className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
-                        <div className="col-span-2 md:col-span-2">
-                            <label className="text-[10px] text-zinc-500 block mb-1">Ürün Adı</label>
-                            <input
-                                type="text"
-                                placeholder="Örn: Biskrem"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm focus:border-primary focus:outline-none"
-                                value={newProduct.name}
-                                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                                required
-                            />
-                        </div>
-
-                        <div className="col-span-2 md:col-span-2">
-                            <label className="text-[10px] text-zinc-500 block mb-1">Ürün Resmi (Otomatik Küçültülür)</label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-xs text-zinc-400 file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 transition"
-                                onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-
-                                    // Image Compression Logic
-                                    const reader = new FileReader();
-                                    reader.readAsDataURL(file);
-                                    reader.onload = (event) => {
-                                        const img = new Image();
-                                        img.src = event.target?.result as string;
-                                        img.onload = () => {
-                                            const canvas = document.createElement("canvas");
-                                            const MAX_WIDTH = 500;
-                                            const MAX_HEIGHT = 500;
-                                            let width = img.width;
-                                            let height = img.height;
-
-                                            if (width > height) {
-                                                if (width > MAX_WIDTH) {
-                                                    height *= MAX_WIDTH / width;
-                                                    width = MAX_WIDTH;
-                                                }
-                                            } else {
-                                                if (height > MAX_HEIGHT) {
-                                                    width *= MAX_HEIGHT / height;
-                                                    height = MAX_HEIGHT;
-                                                }
-                                            }
-
-                                            canvas.width = width;
-                                            canvas.height = height;
-                                            const ctx = canvas.getContext("2d");
-                                            ctx?.drawImage(img, 0, 0, width, height);
-
-                                            // Convert to compressed Base64
-                                            const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-                                            setNewProduct({ ...newProduct, imageUrl: dataUrl });
-                                        };
-                                    };
-                                }}
-                            />
-                            {newProduct.imageUrl && (
-                                <div className="mt-2 relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-700">
-                                    <img src={newProduct.imageUrl} alt="Önizleme" className="object-contain w-full h-full" />
-                                    <button
-                                        type="button"
-                                        onClick={() => setNewProduct({ ...newProduct, imageUrl: "" })}
-                                        className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] text-zinc-500 block mb-1">Satış (₺)</label>
-                            <input
-                                type="number"
-                                placeholder="25"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm focus:border-primary focus:outline-none"
-                                value={newProduct.price}
-                                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] text-zinc-500 block mb-1">Maliyet (₺)</label>
-                            <input
-                                type="number"
-                                placeholder="15"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm focus:border-yellow-500 focus:outline-none"
-                                value={newProduct.costPrice}
-                                onChange={(e) => setNewProduct({ ...newProduct, costPrice: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] text-zinc-500 block mb-1">Stok</label>
-                            <input
-                                type="number"
-                                placeholder="10"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm focus:border-primary focus:outline-none"
-                                value={newProduct.stock}
-                                onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] text-zinc-500 block mb-1">Kategori</label>
-                            <select
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm focus:border-primary focus:outline-none"
-                                value={newProduct.category}
-                                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                            >
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <button type="submit" className="col-span-2 md:col-span-6 bg-primary text-primary-foreground font-bold py-2 rounded-lg hover:opacity-90 transition mt-2">
-                            Ürünü Ekle
-                        </button>
-                    </form>
-                </div>
 
                 {/* Category Management Removed */}
 
