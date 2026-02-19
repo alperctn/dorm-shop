@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchProducts, Product } from "@/services/productService";
 import { useCart } from "@/context/CartContext";
+import { usePathname } from "next/navigation";
 
 export function Search() {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +12,7 @@ export function Search() {
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const [isShopOpen, setIsShopOpen] = useState(true);
+    const pathname = usePathname();
 
     // Sepet fonksiyonları
     const { addToCart, items } = useCart();
@@ -67,6 +69,8 @@ export function Search() {
         setIsOpen(false);
         setQuery("");
     };
+
+    if (pathname !== "/") return null;
 
     return (
         <>

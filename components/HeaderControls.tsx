@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function HeaderControls() {
     const [theme, setTheme] = useState<"dark" | "light">("dark");
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const pathname = usePathname();
 
     useEffect(() => {
         const savedTheme = localStorage.getItem("theme");
@@ -39,6 +41,8 @@ export function HeaderControls() {
             localStorage.setItem("theme", "dark");
         }
     };
+
+    if (pathname !== "/") return null;
 
     return (
         <div className="absolute top-14 right-4 z-50" ref={menuRef}>

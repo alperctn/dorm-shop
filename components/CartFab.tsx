@@ -21,16 +21,16 @@ export function CartFab() {
     return (
         <Link
             href="/checkout"
-            className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-300"
+            className="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-300"
         >
-            <div className="bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 font-bold hover:scale-105 active:scale-95 transition-all border border-yellow-400/50 backdrop-blur-sm">
-                <div className="bg-black/20 px-2.5 py-0.5 rounded-full text-sm min-w-[1.5rem] text-center">
+            <div className="bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold hover:scale-105 active:scale-95 transition-all border border-yellow-400/50 backdrop-blur-sm bg-primary/95">
+                <div className="bg-black/20 px-2 py-0.5 rounded-full text-xs min-w-[1.2rem] text-center">
                     {totalItems}
                 </div>
-                <span>Sepeti Gör</span>
-                <span className="opacity-50">|</span>
-                <span>₺{totalPrice}</span>
-                <span className="ml-1">&rarr;</span>
+                <span className="text-sm">Sepet</span>
+                <span className="opacity-50 text-xs text-white/50">|</span>
+                <span className="text-sm">₺{totalPrice}</span>
+                <span className="ml-1 text-xs">&rarr;</span>
             </div>
         </Link>
     );

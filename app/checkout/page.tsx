@@ -166,144 +166,146 @@ export default function CheckoutPage() {
     }
 
     return (
-        <main className="min-h-screen p-4 md:p-8 max-w-2xl mx-auto">
-            <header className="flex items-center gap-4 mb-8">
-                <Link href="/" className="glass p-3 rounded-full hover:bg-white/10 transition">
+        <main className="min-h-screen p-2 md:p-8 max-w-2xl mx-auto pb-32">
+            <header className="flex items-center gap-4 mb-4">
+                <Link href="/" className="glass p-2 rounded-full hover:bg-white/10 transition">
                     &larr;
                 </Link>
-                <h1 className="text-2xl font-bold">Sepeti Onayla</h1>
+                <h1 className="text-lg font-bold">Sepeti Onayla</h1>
             </header>
 
-            <div className="space-y-6">
+            <div className="space-y-3">
                 {/* Ürün Listesi */}
-                <div className="glass-card p-4 space-y-4">
-                    <h2 className="font-semibold text-lg border-b border-white/5 pb-2">Ürünler</h2>
-                    {items.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl">{item.emoji}</span>
-                                <div>
-                                    <p className="font-medium">{item.name}</p>
-                                    <p className="text-xs text-zinc-400">₺{item.price} x {item.quantity}</p>
+                <div className="glass-card p-3 space-y-2">
+                    <h2 className="font-semibold text-sm border-b border-white/5 pb-1 text-zinc-400">Ürünler</h2>
+                    <div className="max-h-[150px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                        {items.map((item) => (
+                            <div key={item.id} className="flex justify-between items-center bg-zinc-900/30 p-1.5 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">{item.emoji}</span>
+                                    <div>
+                                        <p className="font-medium text-xs text-white">{item.name}</p>
+                                        <p className="text-[10px] text-zinc-500">₺{item.price} x {item.quantity}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 bg-zinc-900 rounded-md p-0.5">
+                                    <button onClick={() => updateQuantity(item.id, -1)} className="px-1.5 hover:text-primary text-xs">-</button>
+                                    <span className="text-xs w-3 text-center">{item.quantity}</span>
+                                    <button onClick={() => updateQuantity(item.id, 1)} className="px-1.5 hover:text-primary text-xs">+</button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 bg-zinc-900 rounded-lg p-1">
-                                <button onClick={() => updateQuantity(item.id, -1)} className="px-2 hover:text-primary">-</button>
-                                <span className="text-sm w-4 text-center">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="px-2 hover:text-primary">+</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Teslimat Seçenekleri */}
-                <div className="glass-card p-4 space-y-4">
-                    <h2 className="font-semibold text-lg border-b border-white/5 pb-2">Teslimat</h2>
-
-                    {!deliveryAvailable && (
-                        <div className="bg-orange-500/10 border border-orange-500/20 text-orange-400 p-3 rounded-lg text-sm flex items-center gap-2 mb-2">
-                            <span>⚠️</span>
-                            <span>Şu an sadece "Gel-Al" servisimiz hizmet vermektedir.</span>
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => setDeliveryMethod("pickup")}
-                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition ${deliveryMethod === 'pickup' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
-                        >
-                            <span className="text-2xl">🏃</span>
-                            <div className="text-sm font-bold">Gel Al</div>
-                            <div className="text-[10px] opacity-70">Ücretsiz</div>
-                        </button>
-
-                        <button
-                            onClick={() => deliveryAvailable && setDeliveryMethod("delivery")}
-                            disabled={!deliveryAvailable}
-                            className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition ${!deliveryAvailable ? 'opacity-50 cursor-not-allowed bg-black/20 text-zinc-600 border-zinc-800' : deliveryMethod === 'delivery' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
-                        >
-                            <span className="text-2xl">🚪</span>
-                            <div className="text-sm font-bold">Odaya Teslim</div>
-                            <div className="text-[10px] opacity-70">
-                                {totalPrice >= 150 ? <span className="text-green-400 font-bold">ÜCRETSİZ</span> : "+5 TL (Sabit)"}
-                            </div>
-                        </button>
+                        ))}
                     </div>
-
-                    {deliveryMethod === "delivery" && (
-                        <div className="animate-in fade-in slide-in-from-top-2">
-                            <label className="text-xs text-zinc-400 mb-1 block">Oda Numarası (Zorunlu)</label>
-                            <input
-                                type="text"
-                                placeholder="Örn: E21, A-Blok 12..."
-                                value={roomNumber}
-                                onChange={(e) => setRoomNumber(e.target.value)}
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-sm focus:border-primary focus:outline-none"
-                            />
-                        </div>
-                    )}
                 </div>
 
-                {/* Ödeme Seçenekleri */}
-                <div className="glass-card p-4 space-y-4">
-                    <h2 className="font-semibold text-lg border-b border-white/5 pb-2">Ödeme</h2>
+                {/* Teslimat ve Ödeme (Grid Layout) */}
+                <div className="grid grid-cols-1 gap-3">
+                    {/* Teslimat */}
+                    <div className="glass-card p-3 space-y-2">
+                        <h2 className="font-semibold text-sm border-b border-white/5 pb-1 text-zinc-400">Teslimat</h2>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => setPaymentMethod("cash")}
-                            className={`p-3 rounded-lg border text-sm font-medium transition ${paymentMethod === 'cash' ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-zinc-900 border-zinc-800'}`}
-                        >
-                            💵 Nakit
-                        </button>
-                        <button
-                            onClick={() => setPaymentMethod("iban")}
-                            className={`p-3 rounded-lg border text-sm font-medium transition ${paymentMethod === 'iban' ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-zinc-900 border-zinc-800'}`}
-                        >
-                            🏦 IBAN
-                        </button>
-                    </div>
-
-                    {paymentMethod === "iban" && (
-                        <div className="bg-zinc-900/50 p-3 rounded-lg text-xs text-zinc-400">
-                            <span className="font-bold text-zinc-200 block text-center mb-1 select-all">TR70 0004 6015 0388 8000 1195 73</span>
-                            <p className="mt-1 text-center font-medium text-primary">Alper ÇETİN</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Özet ve Onay */}
-                <div className="glass-card p-6 sticky bottom-4 shadow-2xl border-t border-white/10 bg-[#18181b]">
-                    <div className="space-y-2 mb-4 text-sm">
-                        <div className="flex justify-between text-zinc-400">
-                            <span>Ara Toplam</span>
-                            <span>₺{totalPrice}</span>
-                        </div>
-                        {deliveryMethod === "delivery" && (
-                            <div className="flex justify-between text-yellow-500">
-                                <span>Teslimat Ücreti</span>
-                                <span>{deliveryFee === 0 ? "ÜCRETSİZ" : `₺${deliveryFee}`}</span>
+                        {!deliveryAvailable && (
+                            <div className="bg-orange-500/10 text-orange-400 p-1.5 rounded text-[10px] flex gap-2">
+                                <span>⚠️ Sadece Gel-Al</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/5">
-                            <span>Toplam</span>
-                            <span>₺{grandTotal}</span>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setDeliveryMethod("pickup")}
+                                className={`p-2 rounded-lg border flex items-center justify-center gap-2 transition ${deliveryMethod === 'pickup' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
+                            >
+                                <span className="text-lg">🏃</span>
+                                <div className="text-left">
+                                    <div className="text-xs font-bold">Gel Al</div>
+                                    <div className="text-[9px] opacity-70">Ücretsiz</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => deliveryAvailable && setDeliveryMethod("delivery")}
+                                disabled={!deliveryAvailable}
+                                className={`p-2 rounded-lg border flex items-center justify-center gap-2 transition ${!deliveryAvailable ? 'opacity-50' : deliveryMethod === 'delivery' ? 'bg-primary/20 border-primary text-primary' : 'bg-black/20 border-white/5 text-zinc-400'}`}
+                            >
+                                <span className="text-lg">🚪</span>
+                                <div className="text-left">
+                                    <div className="text-xs font-bold">Odaya</div>
+                                    <div className="text-[9px] opacity-70">{totalPrice >= 150 ? "Beleş" : "+5 TL"}</div>
+                                </div>
+                            </button>
+                        </div>
+                        {deliveryMethod === "delivery" && (
+                            <input
+                                type="text"
+                                placeholder="Oda No (Örn: E21)"
+                                value={roomNumber}
+                                onChange={(e) => setRoomNumber(e.target.value)}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-md p-1.5 text-xs focus:border-primary focus:outline-none mt-1"
+                            />
+                        )}
+                    </div>
+
+                    {/* Ödeme */}
+                    <div className="glass-card p-3 space-y-2">
+                        <h2 className="font-semibold text-sm border-b border-white/5 pb-1 text-zinc-400">Ödeme</h2>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setPaymentMethod("cash")}
+                                className={`p-2 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-2 ${paymentMethod === 'cash' ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
+                            >
+                                <span>💵</span> Nakit
+                            </button>
+                            <button
+                                onClick={() => setPaymentMethod("iban")}
+                                className={`p-2 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-2 ${paymentMethod === 'iban' ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
+                            >
+                                <span>🏦</span> IBAN
+                            </button>
+                        </div>
+                        {paymentMethod === "iban" && (
+                            <div className="bg-zinc-900/50 p-3 rounded-lg text-center border border-white/5 animate-in fade-in slide-in-from-top-2">
+                                <p className="text-xs text-zinc-400 mb-1">IBAN (Kopyalamak için tıkla)</p>
+                                <div
+                                    onClick={() => {
+                                        navigator.clipboard.writeText("TR70 0004 6015 0388 8000 1195 73");
+                                        alert("IBAN Kopyalandı! ✅");
+                                    }}
+                                    className="font-mono text-sm font-bold text-white bg-black/20 p-2 rounded cursor-pointer active:scale-95 transition select-all"
+                                >
+                                    TR70 0004 6015 0388 8000 1195 73
+                                </div>
+                                <p className="mt-2 text-sm font-medium text-primary">Alper ÇETİN</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Sticky Footer */}
+                <div className="fixed bottom-0 left-0 right-0 glass-card p-3 border-t border-white/10 bg-[#18181b]/95 backdrop-blur-md z-50 rounded-t-2xl rounded-b-none shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+                    <div className="flex justify-between items-center mb-2 px-1">
+                        <div className="text-xs text-zinc-400">
+                            Toplam Tutar
+                        </div>
+                        <div className="text-xl font-bold text-white">
+                            ₺{grandTotal}
                         </div>
                     </div>
 
-                    <button
-                        onClick={handleOrder}
-                        disabled={loading}
-                        className="w-full bg-primary text-primary-foreground font-bold py-4 rounded-xl hover:opacity-90 transition shadow-lg shadow-primary/20 disabled:opacity-50"
-                    >
-                        {loading ? "Sipariş Gönderiliyor..." : "Siparişi Tamamla"}
-                    </button>
-
-                    <button
-                        onClick={handleWhatsAppOrder}
-                        className="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-[#25D366]/20 hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2 mt-3"
-                    >
-                        <span>📱</span> WhatsApp ile Sipariş Ver
-                    </button>
+                    <div className="grid grid-cols-5 gap-2">
+                        <button
+                            onClick={handleWhatsAppOrder}
+                            className="col-span-2 bg-[#25D366] text-white py-2.5 rounded-lg font-bold text-xs shadow-lg shadow-[#25D366]/20 flex items-center justify-center gap-1"
+                        >
+                            <span>📱</span> WhatsApp
+                        </button>
+                        <button
+                            onClick={handleOrder}
+                            disabled={loading}
+                            className="col-span-3 bg-primary text-primary-foreground font-bold py-2.5 rounded-lg hover:opacity-90 shadow-lg shadow-primary/20 disabled:opacity-50 text-xs"
+                        >
+                            {loading ? "..." : "Siparişi Tamamla"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>

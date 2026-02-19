@@ -51,7 +51,7 @@ export default function CategoryPage() {
     };
 
     return (
-        <main className="min-h-screen p-4 md:p-8">
+        <main className="min-h-screen p-4 md:p-8 pb-24">
             <div className="max-w-4xl mx-auto">
                 <header className="flex items-center gap-4 mb-8">
                     <Link href="/" className="glass p-3 rounded-full hover:bg-white/10 transition">

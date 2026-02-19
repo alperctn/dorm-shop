@@ -62,7 +62,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen p-4 md:p-8 relative overflow-hidden flex flex-col items-center justify-center">
+    <main className="min-h-screen p-4 md:p-8 pb-24 relative overflow-hidden flex flex-col items-center justify-center">
       {/* Background Ambience */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
