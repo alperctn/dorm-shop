@@ -26,7 +26,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Seller not found" }, { status: 404 });
         }
 
-        // 3. Update Status or Limit
+        // 3. Update Status, Limit, or Profile
         if (action === "updateLimit") {
             const limit = parseInt(body.limit);
             if (!isNaN(limit)) {
@@ -35,11 +35,37 @@ export async function POST(request: Request) {
             }
         }
 
+        if (action === "updateProfile") {
+            const { newDisplayName, newBalance } = body;
+            const updates: any = {};
+
+            if (newDisplayName) updates.display_name = newDisplayName;
+            if (newBalance !== undefined) updates.balance = parseFloat(newBalance);
+
+            await dbServer.patch(`/sellers/${safeUsername}`, updates);
+            return NextResponse.json({ success: true, message: "Profile updated" });
+        }
+
         let newStatus = seller.status;
         if (action === "approve") newStatus = "active";
         else if (action === "reject") newStatus = "rejected"; // We might just delete, but keeping record is better
         else if (action === "ban") newStatus = "banned";
         else if (action === "pending") newStatus = "pending";
+
+        if (action === "delete") {
+            // 1. Delete Seller
+            await dbServer.delete(`/sellers/${safeUsername}`);
+
+            // 2. Delete Seller's Products
+            const allProducts = (await dbServer.get("/products")) as any[] || [];
+            const remainingProducts = allProducts.filter(p => p.seller !== username);
+
+            if (remainingProducts.length !== allProducts.length) {
+                await dbServer.put("/products", remainingProducts);
+            }
+
+            return NextResponse.json({ success: true, message: "Seller deleted" });
+        }
 
         if (action !== "updateLimit") {
             await dbServer.patch(`/sellers/${safeUsername}`, { status: newStatus });

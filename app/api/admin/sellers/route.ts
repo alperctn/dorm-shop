@@ -39,14 +39,16 @@ export async function GET() {
             // Get Seller Products
             const sellerProducts = allProducts.filter((p: any) => p.seller === s.username);
 
-            // Calculate Sales Count
+            // Calculate Sales Count & Revenue
             let salesCount = 0;
+            let totalRevenue = 0;
             allOrders.forEach((order: any) => {
                 if (order.status !== 'rejected') { // Count active or pending orders
                     if (order.items && Array.isArray(order.items)) {
                         order.items.forEach((item: any) => {
                             if (item.seller === s.username) {
                                 salesCount += item.quantity || 0;
+                                totalRevenue += (item.price || 0) * (item.quantity || 0);
                             }
                         });
                     }
@@ -58,9 +60,15 @@ export async function GET() {
                 display_name: s.display_name,
                 status: s.status,
                 joinedAt: s.joinedAt,
+                firstName: s.firstName,
+                lastName: s.lastName,
+                email: s.email,
+                phone: s.phone,
                 productCount: sellerProducts.length,
                 salesCount: salesCount,
+                totalRevenue: totalRevenue,
                 productLimit: s.productLimit || 2,
+                balance: s.balance || 0,
                 products: sellerProducts // Send products to frontend for the modal
             };
         });

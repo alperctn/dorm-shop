@@ -10,6 +10,7 @@ export type CartItem = {
     emoji: string;
     quantity: number;
     stock: number;
+    seller?: string;
 };
 
 type CartContextType = {

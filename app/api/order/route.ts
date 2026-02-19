@@ -52,122 +52,165 @@ export async function POST(request: Request) {
         // 0. Rate Limiting Check
         const ip = request.headers.get("x-forwarded-for") || "unknown";
         try {
-            await limiter.check(new Response(), 3, ip); // Limit: 3 requests per IP
+            await limiter.check(new Response(), 5, ip); // Increased limit for batch
         } catch {
             logger.warn("Rate limit exceeded", { ip });
-            return NextResponse.json({ error: "Çok hızlı sipariş veriyorsunuz! Lütfen 1 dakika bekleyin. ⏳" }, { status: 429 });
+            return NextResponse.json({ error: "Çok hızlı işlem yapıyorsunuz! Lütfen bekleyin. ⏳" }, { status: 429 });
         }
 
         const body = await request.json();
-        const { items, deliveryMethod, roomNumber, paymentMethod, totalPrice } = body;
 
-        // 1. Fetch current stock
-        const products = await dbServer.get("/products");
+        // Handle both single order (legacy) and batch orders (new)
+        const orderRequests = body.orders || [body];
+
+        if (!Array.isArray(orderRequests) || orderRequests.length === 0) {
+            return NextResponse.json({ error: "Geçersiz sipariş verisi." }, { status: 400 });
+        }
+
+        // 1. Fetch current stock & delivery fee
+        const [products, dbFee] = await Promise.all([
+            dbServer.get("/products"),
+            dbServer.get("/deliveryFee")
+        ]);
+        const serverDeliveryFee = dbFee === null ? 5 : Number(dbFee); // Default global fee (if used)
+
         if (!products) {
             logger.critical("Database connection failed or products missing");
-            return NextResponse.json({ error: "System error: Products not found" }, { status: 500 });
+            return NextResponse.json({ error: "Sistem hatası: Ürünler yüklenemedi." }, { status: 500 });
         }
 
-        // 2. Verify and Deduct Stock (Provisional Deduction)
+        // 2. Process All Orders (Stock Check & Deduction)
         const updatedProducts = [...products];
+        const successfulOrders: any[] = [];
+        const processLog: string[] = [];
 
-        for (const item of items) {
-            const productIndex = updatedProducts.findIndex((p: any) => p.id === item.id);
-            if (productIndex === -1) continue;
+        // First Pass: Check Stock & Apply Deductions for ALL items in ALL orders
+        for (const orderData of orderRequests) {
+            const { items } = orderData;
 
-            const product = updatedProducts[productIndex];
+            if (!items || !Array.isArray(items) || items.length === 0) continue;
 
-            if (product.stock < item.quantity) {
-                logger.warn("Stock mismatch during order", { item: item.name, stock: product.stock, requested: item.quantity });
-                return NextResponse.json({
-                    success: false,
-                    error: `${product.name} stokta kalmadı! (Kalan: ${product.stock})`
-                }, { status: 400 });
-            }
+            for (const item of items) {
+                const productIndex = updatedProducts.findIndex((p: any) => p.id === item.id);
+                if (productIndex === -1) {
+                    return NextResponse.json({ error: `Ürün bulunamadı: ${item.name}` }, { status: 400 });
+                }
 
-            updatedProducts[productIndex] = {
-                ...product,
-                stock: product.stock - item.quantity
-            };
-        }
+                const product = updatedProducts[productIndex];
+                if (product.stock < item.quantity) {
+                    return NextResponse.json({
+                        error: `${product.name} stokta kalmadı! (Kalan: ${product.stock})`
+                    }, { status: 400 });
+                }
 
-        // 3. Save Updated Stock
-        await dbServer.put("/products", updatedProducts);
-
-        // 4. Create Order Record (Status: Pending)
-        // We calculate details but don't add to "Sales" yet.
-        let itemsSummary = "";
-        let totalProfit = 0;
-        let serverCalculatedTotal = 0;
-
-        // Enrich items with DB data (especially seller info)
-        const enrichedItems = items.map((item: any) => {
-            const product = updatedProducts.find((p: any) => p.id === item.id);
-            if (product) {
-                const cost = product.costPrice || 0;
-                const profitPerItem = product.price - cost;
-
-                // Server-side price calculation
-                serverCalculatedTotal += product.price * item.quantity;
-                totalProfit += profitPerItem * item.quantity;
-
-                itemsSummary += `${item.quantity}x ${product.name}, `;
-
-                return {
-                    ...item,
-                    name: product.name,
-                    price: product.price,
-                    seller: product.seller // Add seller info
+                // Deduct stock in memory
+                updatedProducts[productIndex] = {
+                    ...product,
+                    stock: product.stock - item.quantity
                 };
             }
-            return item;
-        });
-
-        // Delivery Fee Logic
-        const deliveryFee = deliveryMethod === "delivery" ? (serverCalculatedTotal >= 150 ? 0 : 5) : 0;
-        const grandTotal = serverCalculatedTotal + deliveryFee;
-
-        // Verify if client total was wildly different (Optional: specific security alert)
-        if (Math.abs(grandTotal - totalPrice) > 1) {
-            logger.warn("Price Manipulation Attempt", { clientTotal: totalPrice, serverTotal: grandTotal, ip });
         }
 
-        if (deliveryMethod === "delivery") totalProfit += deliveryFee;
+        // 3. Save Updated Stock (Atomic-like for the batch)
+        await dbServer.put("/products", updatedProducts);
 
-        const orderId = crypto.randomUUID();
-        const orderRecord = {
-            id: orderId,
-            status: "pending", // pending, approved, rejected
-            date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
-            items: enrichedItems, // Save enriched items with seller info
-            itemsSummary: itemsSummary.slice(0, -2),
-            total: grandTotal, // Use the SAFE server-calculated total
-            profit: totalProfit,
-            deliveryMethod,
-            roomNumber,
-            paymentMethod
-        };
+        // 4. Create Order Records & Notifications
+        for (const orderData of orderRequests) {
+            const { items, deliveryMethod, roomNumber, paymentMethod, totalPrice, seller: orderSeller } = orderData;
 
-        // Save to /orders
-        await dbServer.put(`/orders/${orderId}`, orderRecord);
+            let itemsSummary = "";
+            let totalProfit = 0;
+            let serverCalculatedTotal = 0;
 
-        // 5. Send Notification with Buttons
-        let message = `*Yeni Sipariş Bekliyor!* ⏳\n\n`;
-        items.forEach((item: any) => {
-            message += `${item.quantity}x ${item.name}\n`;
+            // Enrich items
+            const enrichedItems = items.map((item: any) => {
+                const product = products.find((p: any) => p.id === item.id); // Use original products for reference info
+                if (product) {
+                    const cost = product.costPrice || 0;
+                    const profitPerItem = product.price - cost;
+
+                    serverCalculatedTotal += product.price * item.quantity;
+                    totalProfit += profitPerItem * item.quantity;
+
+                    itemsSummary += `${item.quantity}x ${product.name}, `;
+
+                    return {
+                        ...item,
+                        name: product.name,
+                        price: product.price,
+                        seller: product.seller
+                    };
+                }
+                return item;
+            });
+
+            // Delivery Fee Logic (Per Order/Seller Group)
+            // If it's a "delivery" order, we apply fee unless > 150TL
+            // Note: If multiple orders share delivery, logic might need distinct handling, 
+            // but simplified Plan assumes each seller group handles its own delivery terms/fees or we apply it once.
+            // For now, implementing: Apply fee if delivery chosen for this sub-order.
+            const currentDeliveryFee = deliveryMethod === "delivery" ? (serverCalculatedTotal >= 150 ? 0 : serverDeliveryFee) : 0;
+            const grandTotal = serverCalculatedTotal + currentDeliveryFee;
+
+            if (deliveryMethod === "delivery") totalProfit += currentDeliveryFee;
+
+            const orderId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+            const orderRecord = {
+                id: orderId,
+                status: "pending",
+                date: new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }),
+                items: enrichedItems,
+                itemsSummary: itemsSummary.slice(0, -2),
+                total: grandTotal,
+                profit: totalProfit,
+                deliveryMethod,
+                roomNumber,
+                paymentMethod,
+                seller: orderSeller || 'admin' // Track which seller this order is mainly for
+            };
+
+            // Save Order
+            await dbServer.put(`/orders/${orderId}`, orderRecord);
+            successfulOrders.push(orderRecord);
+
+            // Send Notification
+            let message = `*Yeni Sipariş!* 🆕\n`;
+            message += `*Satıcı:* @${orderRecord.seller}\n`; // Explicitly state seller
+            message += `*Sipariş ID:* ${orderId}\n\n`;
+
+            enrichedItems.forEach((item: any) => {
+                message += `- ${item.quantity}x ${item.name}\n`;
+            });
+
+            message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim' : 'Gel Al'}`;
+            if (deliveryMethod === 'delivery') message += ` (Oda: ${roomNumber})`;
+            message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
+
+            if (deliveryMethod === 'delivery' && currentDeliveryFee > 0) {
+                message += `\n🛵 *Kurye:* +${currentDeliveryFee} TL`;
+            }
+
+            message += `\n💰 *Toplam:* ₺${grandTotal}`;
+
+            // Add note for contact if simple IBAN/Payment is ambiguous for non-admin
+            if (orderRecord.seller !== 'admin' && paymentMethod === 'iban') {
+                message += `\n⚠️ *Not:* Ödeme için satıcıyla iletişime geçin.`;
+            }
+
+            // Send standard telegram msg
+            await sendTelegramMessage(message, true, orderId);
+        }
+
+        logger.info("Batch orders created", { count: successfulOrders.length });
+
+        // Return success with all order IDs (frontend can use first or all)
+        return NextResponse.json({
+            success: true,
+            orders: successfulOrders.map(o => ({ id: o.id, total: o.total }))
         });
-        message += `\n📦 *Teslimat:* ${deliveryMethod === 'delivery' ? 'Odaya Teslim (+5TL)' : 'Gel Al'}`;
-        if (deliveryMethod === 'delivery') message += `\n🏠 *Oda:* ${roomNumber}`;
-        message += `\n💳 *Ödeme:* ${paymentMethod === 'iban' ? 'IBAN' : 'Nakit'}`;
-        message += `\n\n💰 *Toplam:* ₺${grandTotal}`;
-
-        await sendTelegramMessage(message, true, orderId);
-
-        logger.info("New order created", { orderId, total: grandTotal });
-        return NextResponse.json({ success: true, orderId });
 
     } catch (error: any) {
         logger.error("Order Critical Error", { error: error.message, stack: error.stack });
-        return NextResponse.json({ error: error.message || "Order failed" }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Sipariş oluşturulamadı." }, { status: 500 });
     }
 }

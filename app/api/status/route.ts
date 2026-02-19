@@ -6,14 +6,18 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        const [isOpen, deliveryAvailable] = await Promise.all([
+        const [isOpen, deliveryAvailable, deliveryFee] = await Promise.all([
             dbServer.get("/shopStatus"),
-            dbServer.get("/deliveryStatus")
+            dbServer.get("/deliveryStatus"),
+            dbServer.get("/deliveryFee")
         ]);
+
+        console.log("API/STATUS GET:", { isOpen, deliveryAvailable, deliveryFee });
 
         return NextResponse.json({
             isOpen: isOpen === null ? true : isOpen,
-            deliveryAvailable: deliveryAvailable === null ? true : deliveryAvailable
+            deliveryAvailable: deliveryAvailable === null ? true : deliveryAvailable,
+            deliveryFee: deliveryFee === null ? 5 : Number(deliveryFee)
         });
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 });
@@ -30,6 +34,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
+        console.log("API/STATUS POST Body:", body);
 
         if (body.isOpen !== undefined) {
             await dbServer.put("/shopStatus", body.isOpen);
@@ -37,6 +42,11 @@ export async function POST(request: Request) {
 
         if (body.deliveryAvailable !== undefined) {
             await dbServer.put("/deliveryStatus", body.deliveryAvailable);
+        }
+
+        if (body.deliveryFee !== undefined) {
+            console.log("Updating deliveryFee to:", Number(body.deliveryFee));
+            await dbServer.put("/deliveryFee", Number(body.deliveryFee));
         }
 
         return NextResponse.json({ success: true });

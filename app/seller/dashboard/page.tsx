@@ -23,7 +23,7 @@ export default function SellerDashboard() {
     const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "", category: "diger", imageUrl: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [productLimit, setProductLimit] = useState<number>(2);
+    const [stats, setStats] = useState({ productLimit: 2, totalRevenue: 0, totalSales: 0 });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,7 +42,7 @@ export default function SellerDashboard() {
 
                 if (statusRes.ok) {
                     const status = await statusRes.json();
-                    setProductLimit(status.productLimit);
+                    setStats(status);
                 }
             } catch (error) {
                 console.error("Failed to fetch data");
@@ -165,11 +165,17 @@ export default function SellerDashboard() {
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold">Ürünlerim ({products.length})</h2>
-                        {products.length > 0 && (
-                            <div className="text-xs font-bold px-3 py-1 bg-zinc-900 rounded-full border border-zinc-800">
-                                Limit: <span className={`${products.length >= (productLimit || 2) ? 'text-red-500' : 'text-green-500'}`}>{products.length}</span> / {productLimit || 2}
+
+                        <div className="flex gap-2">
+                            <div className="text-xs font-bold px-3 py-1 bg-zinc-900 rounded-full border border-zinc-800 text-blue-400">
+                                Ciro: {stats.totalRevenue}₺
                             </div>
-                        )}
+                            {products.length > 0 && (
+                                <div className="text-xs font-bold px-3 py-1 bg-zinc-900 rounded-full border border-zinc-800">
+                                    Limit: <span className={`${products.length >= (stats.productLimit || 2) ? 'text-red-500' : 'text-green-500'}`}>{products.length}</span> / {stats.productLimit || 2}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {products.length === 0 ? (
@@ -271,6 +277,12 @@ export default function SellerDashboard() {
                                 onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                                 className="w-full bg-black/40 border border-zinc-700 rounded-lg p-2 text-sm focus:border-purple-500 outline-none"
                             >
+                                <option value="yiyecek">Yiyecek</option>
+                                <option value="icecek">İçecek</option>
+                                <option value="sigara">Sigara</option>
+                                <option value="giyim">Giyim</option>
+                                <option value="kirtasiye">Kırtasiye</option>
+                                <option value="elektronik">Elektronik</option>
                                 <option value="diger">Diğer</option>
                             </select>
                         </div>
@@ -370,6 +382,88 @@ export default function SellerDashboard() {
                     </div>
                 </div>
             )}
+            <SupportWidget />
+        </div>
+    );
+}
+
+function SupportWidget() {
+    const [isOpen, setIsOpen] = useState(false);
+    const [message, setMessage] = useState("");
+    const [sending, setSending] = useState(false);
+
+    const handleSend = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim()) return;
+
+        setSending(true);
+        try {
+            const res = await fetch("/api/support", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+
+            if (res.ok) {
+                alert("Mesajınız iletildi! 📨");
+                setMessage("");
+                setIsOpen(false);
+            } else {
+                alert("Mesaj gönderilemedi.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Bir hata oluştu.");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    return (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+            {isOpen && (
+                <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-4 w-72 mb-4 animate-in slide-in-from-bottom-5 fade-in">
+                    <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                            <span>💬</span> Canlı Destek
+                        </h3>
+                        <button onClick={() => setIsOpen(false)} className="text-zinc-500 hover:text-white">✕</button>
+                    </div>
+
+                    <form onSubmit={handleSend}>
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Sorunuzu buraya yazın..."
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-purple-500 resize-none h-32 mb-3"
+                        />
+                        <button
+                            type="submit"
+                            disabled={sending}
+                            className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-lg text-sm transition disabled:opacity-50"
+                        >
+                            {sending ? "Gönderiliyor..." : "Gönder 🚀"}
+                        </button>
+                    </form>
+                    <p className="text-[10px] text-zinc-500 text-center mt-3">
+                        Yöneticilerimize anında iletilir.
+                    </p>
+                </div>
+            )}
+
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="bg-purple-600 hover:bg-purple-500 text-white p-4 rounded-full shadow-xl shadow-purple-500/20 transition-transform hover:scale-105 flex items-center gap-2 font-bold"
+            >
+                {isOpen ? (
+                    <span className="text-xl">✖</span>
+                ) : (
+                    <>
+                        <span className="text-xl">💬</span>
+                        <span className="hidden md:inline">Destek</span>
+                    </>
+                )}
+            </button>
         </div>
     );
 }

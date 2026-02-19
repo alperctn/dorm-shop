@@ -5,10 +5,10 @@ import crypto from "crypto";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { username, password, confirmPassword } = body;
+        const { username, password, confirmPassword, firstName, lastName, storeName, email, phone } = body;
 
         // 1. Basic Validation
-        if (!username || !password || !confirmPassword) {
+        if (!username || !password || !confirmPassword || !firstName || !lastName || !storeName || !email || !phone) {
             return NextResponse.json({ error: "Tüm alanları doldurun." }, { status: 400 });
         }
 
@@ -41,9 +41,14 @@ export async function POST(request: Request) {
         const passwordHash = crypto.scryptSync(password, salt, 64).toString("hex");
 
         // 5. Create User Object
+        // 5. Create User Object
         const newUser = {
             username: safeUsername,
-            display_name: username, // Original casing
+            display_name: storeName, // Use Store Name as display name
+            firstName,
+            lastName,
+            email,
+            phone,
             passwordHash,
             salt,
             role: "seller",

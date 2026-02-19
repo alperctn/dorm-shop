@@ -105,23 +105,37 @@ export default function Home() {
             <Link
               key={cat.id}
               href={`/category/${cat.id}`}
-              className={`glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 ${cat.border}`}
+              className={`glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 ${cat.border} flex flex-col items-center text-center`}
             >
               <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-5xl mb-6 shadow-lg group-hover:shadow-xl transition-shadow`}>
                 {cat.emoji}
               </div>
               <h2 className="text-2xl font-bold text-zinc-100 mb-2">{cat.name}</h2>
-              <p className="text-zinc-500 text-sm">{cat.description}</p>
-              <div className="mt-6 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+              <p className="text-zinc-500 text-sm mb-4">{cat.description}</p>
+              <div className="mt-auto text-xs font-bold px-4 py-2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700 group-hover:border-zinc-500 transition-colors opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transform duration-300">
                 Ürünleri Gör &rarr;
               </div>
             </Link>
           ))}
 
-        </div>
+          {/* Other Sellers Link */}
+          <Link
+            href="/diger-saticilar"
+            className="glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 hover:border-yellow-500/50 flex flex-col items-center text-center relative overflow-hidden"
+          >
+            <div className="absolute top-3 right-3 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-500/20 animate-pulse">
+              ÇOK YAKINDA
+            </div>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-lg mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
+              🤝
+            </div>
+            <h2 className="text-xl font-bold text-zinc-100 mb-1">Diğer Satıcı Ürünleri</h2>
 
-        {/* Sell Request & Print Service */}
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
+            <div className="mt-auto text-xs font-bold px-4 py-2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700 group-hover:border-zinc-500 transition-colors">
+              İncele &rarr;
+            </div>
+          </Link>
+
           {/* Print Service */}
           <Link
             href="/print"
@@ -134,24 +148,6 @@ export default function Home() {
             <p className="text-zinc-500 text-sm mb-3">Ödev ve not çıkart.</p>
             <div className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
               Sayfası 5 TL
-            </div>
-          </Link>
-
-          {/* Sell Application (Coming Soon) */}
-          <Link
-            href="/marketplace"
-            className="glass-card p-8 group transition-all duration-300 hover:scale-105 border border-white/5 hover:border-zinc-500/50 flex flex-col items-center text-center relative overflow-hidden"
-          >
-            <div className="absolute top-3 right-3 bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
-              TEST AŞAMASINDA
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center text-4xl shadow-lg mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
-              🤝
-            </div>
-            <h2 className="text-xl font-bold text-zinc-100 mb-1">Ben de Satmak İstiyorum</h2>
-            <p className="text-zinc-500 text-sm mb-3">Kendi ürünlerini burada sat.</p>
-            <div className="mt-auto text-xs font-bold px-4 py-2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700 group-hover:border-zinc-500 transition-colors">
-              Başvur &rarr;
             </div>
           </Link>
         </div>

@@ -21,10 +21,13 @@ export default function AdminPage() {
     const [visitors, setVisitors] = useState<{ date: string, count: number }[]>([]);
     const [orders, setOrders] = useState<any[]>([]); // New Order State
     const [categories, setCategories] = useState<Category[]>([]);
+    const [expandedCategories, setExpandedCategories] = useState<string[]>([]); // New state for accordion
     const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State for editing
     const [hourlyData, setHourlyData] = useState<{ hour: string, count: number }[]>([]);
     const [isShopOpen, setIsShopOpen] = useState(true);
     const [isDeliveryOpen, setIsDeliveryOpen] = useState(true);
+    const [deliveryFee, setDeliveryFee] = useState<number>(5);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     // Load products and categories on mount
     useEffect(() => {
@@ -81,6 +84,7 @@ export default function AdminPage() {
                     const data = await res.json();
                     setIsShopOpen(data.isOpen);
                     setIsDeliveryOpen(data.deliveryAvailable);
+                    setDeliveryFee(data.deliveryFee);
                 }
             } catch (e) {
                 console.error("Status fetch error", e);
@@ -95,11 +99,11 @@ export default function AdminPage() {
             await fetch("/api/status", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ isOpen: status })
+                body: JSON.stringify({ isOpen: status }),
             });
         } catch (e) {
-            console.error("Status update error", e);
-            alert("Durum güncellenemedi!");
+            console.error(e);
+            setIsShopOpen(!status); // Revert on error
         }
     };
 
@@ -109,11 +113,24 @@ export default function AdminPage() {
             await fetch("/api/status", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ deliveryAvailable: status })
+                body: JSON.stringify({ deliveryAvailable: status }),
             });
         } catch (e) {
-            console.error("Status update error", e);
-            alert("Durum güncellenemedi!");
+            console.error(e);
+            setIsDeliveryOpen(!status); // Revert on error
+        }
+    };
+
+    const updateDeliveryFee = async (fee: number) => {
+        setDeliveryFee(fee);
+        try {
+            await fetch("/api/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deliveryFee: fee }),
+            });
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -213,6 +230,27 @@ export default function AdminPage() {
                         <span>➕</span>
                         <span className="hidden md:inline">Yeni Ürün Ekle</span>
                     </Link>
+
+                    {/* More Options Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setMenuOpen(!menuOpen)}
+                            className="p-2 hover:bg-white/10 rounded-full transition w-10 h-10 flex items-center justify-center"
+                        >
+                            <span className="text-xl font-bold mb-2">...</span>
+                        </button>
+                        {menuOpen && (
+                            <div className="absolute right-0 top-full mt-2 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl py-2 z-50 w-48 animate-in fade-in slide-in-from-top-2">
+                                <Link
+                                    href="/admin/sellers"
+                                    className="block px-4 py-2 hover:bg-white/10 text-sm text-zinc-300 hover:text-white"
+                                >
+                                    👥 Satıcı Yönetimi
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+
                     <Link href="/" className="text-sm text-zinc-400 hover:text-white underline">
                         Dükkana Dön
                     </Link>
@@ -222,7 +260,7 @@ export default function AdminPage() {
             {/* Hardware Control & Status */}
             <div className="glass-card p-6 mb-8">
                 <h2 className="text-xl font-semibold mb-4">Mekan & Servis Durumu</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Dükkan Açık/Kapalı */}
                     <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
                         <h3 className="text-sm font-bold text-zinc-400 mb-3">🏪 Dükkan Durumu</h3>
@@ -246,7 +284,7 @@ export default function AdminPage() {
 
                     {/* Paket Servis */}
                     <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
-                        <h3 className="text-sm font-bold text-zinc-400 mb-3">🛵 Paket Servis (Odaya Teslim)</h3>
+                        <h3 className="text-sm font-bold text-zinc-400 mb-3">🛵 Paket Servis</h3>
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => toggleDeliveryStatus(true)}
@@ -261,6 +299,29 @@ export default function AdminPage() {
                             >
                                 <span className="text-xl">🚫</span>
                                 <span className="font-bold text-sm">KAPALI</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Teslimat Ücreti */}
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                        <h3 className="text-sm font-bold text-zinc-400 mb-3">💰 Teslimat Ücreti</h3>
+                        <div className="flex gap-2 items-center">
+                            <div className="relative w-full">
+                                <input
+                                    type="number"
+                                    value={deliveryFee}
+                                    onChange={(e) => setDeliveryFee(Number(e.target.value))}
+                                    onBlur={() => updateDeliveryFee(deliveryFee)}
+                                    className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-center text-lg font-bold focus:border-primary focus:outline-none"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">TL</span>
+                            </div>
+                            <button
+                                onClick={() => updateDeliveryFee(0)}
+                                className="bg-green-500/10 text-green-500 font-bold px-4 py-3 rounded-lg hover:bg-green-500/20 text-xs whitespace-nowrap"
+                            >
+                                Ücretsiz Yap
                             </button>
                         </div>
                     </div>
@@ -396,131 +457,167 @@ export default function AdminPage() {
 
                 {/* Category Management Removed */}
 
-                {/* Stock Management */}
-                <div className="glass-card p-6 md:col-span-2">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                        📦 Stok Takibi
-                    </h2>
+                {/* Stock Management - Compact Accordion */}
+                <div className="glass-card p-4 md:p-6 md:col-span-2">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                            📦 Stok Takibi & Düzenleme
+                        </h2>
+                        <button
+                            onClick={() => setExpandedCategories(expandedCategories.length > 0 ? [] : categories.map(c => c.slug))}
+                            className="text-xs text-primary hover:text-white transition"
+                        >
+                            {expandedCategories.length > 0 ? "Hepsini Kapat" : "Hepsini Aç"}
+                        </button>
+                    </div>
 
-                    <div className="space-y-8">
+                    <div className="space-y-4">
                         {products.length === 0 ? (
-                            <p className="text-zinc-500 text-center py-4">Loading products...</p>
+                            <p className="text-zinc-500 text-center py-4">Ürünler yükleniyor...</p>
                         ) : (
                             categories.map(category => {
                                 const categoryProducts = products.filter(p => p.category === category.slug);
                                 if (categoryProducts.length === 0) return null;
 
+                                const isExpanded = expandedCategories.includes(category.slug);
+
                                 return (
-                                    <div key={category.id} className="mb-8">
-                                        <h3 className="text-lg font-bold text-zinc-400 border-b border-white/5 pb-2 mb-4 sticky top-0 bg-[#18181b]/95 backdrop-blur-sm z-10 flex items-center gap-2">
-                                            <span className="text-primary">#</span> {category.name}
-                                            <span className="text-xs font-normal text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded-full ml-auto">{categoryProducts.length} Ürün</span>
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {categoryProducts.map((product) => (
-                                                <div key={product.id} className="flex flex-col justify-between p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-primary/30 transition group">
-                                                    <div>
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h4 className="font-semibold text-zinc-200 line-clamp-1" title={product.name}>{product.name}</h4>
-                                                            <div className="flex gap-1">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const index = products.findIndex(p => p.id === product.id);
-                                                                        // Find previous product in the SAME category
-                                                                        let targetIndex = -1;
-                                                                        for (let i = index - 1; i >= 0; i--) {
-                                                                            if (products[i].category === product.category) {
-                                                                                targetIndex = i;
-                                                                                break;
-                                                                            }
-                                                                        }
+                                    <div key={category.id} className="border border-white/5 rounded-xl overflow-hidden bg-zinc-900/30">
+                                        {/* Category Header */}
+                                        <button
+                                            onClick={() => {
+                                                setExpandedCategories(prev =>
+                                                    prev.includes(category.slug)
+                                                        ? prev.filter(s => s !== category.slug)
+                                                        : [...prev, category.slug]
+                                                );
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition bg-zinc-900/50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-xl transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                                                <span className="font-bold text-lg text-zinc-200">{category.name}</span>
+                                                <span className="text-xs font-normal text-zinc-500 bg-black/40 px-2 py-0.5 rounded-full">{categoryProducts.length} Ürün</span>
+                                            </div>
+                                            <div className="text-xs text-zinc-600">
+                                                {isExpanded ? "Kapat" : "Ürünleri Göster"}
+                                            </div>
+                                        </button>
 
-                                                                        if (targetIndex !== -1) {
-                                                                            const newProducts = [...products];
-                                                                            // Swap
-                                                                            [newProducts[targetIndex], newProducts[index]] = [newProducts[index], newProducts[targetIndex]];
-                                                                            setProducts(newProducts);
-                                                                            saveProducts(newProducts);
-                                                                        }
-                                                                    }}
-                                                                    className="text-zinc-400 bg-zinc-800 p-1.5 rounded hover:bg-zinc-700 transition opacity-0 group-hover:opacity-100"
-                                                                    title="Yukarı Taşı"
-                                                                >
-                                                                    ⬆️
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const index = products.findIndex(p => p.id === product.id);
-                                                                        // Find next product in the SAME category
-                                                                        let targetIndex = -1;
-                                                                        for (let i = index + 1; i < products.length; i++) {
-                                                                            if (products[i].category === product.category) {
-                                                                                targetIndex = i;
-                                                                                break;
-                                                                            }
-                                                                        }
-
-                                                                        if (targetIndex !== -1) {
-                                                                            const newProducts = [...products];
-                                                                            // Swap
-                                                                            [newProducts[targetIndex], newProducts[index]] = [newProducts[index], newProducts[targetIndex]];
-                                                                            setProducts(newProducts);
-                                                                            saveProducts(newProducts);
-                                                                        }
-                                                                    }}
-                                                                    className="text-zinc-400 bg-zinc-800 p-1.5 rounded hover:bg-zinc-700 transition opacity-0 group-hover:opacity-100"
-                                                                    title="Aşağı Taşı"
-                                                                >
-                                                                    ⬇️
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setEditingProduct(product)}
-                                                                    className="text-blue-500 bg-blue-500/10 p-1.5 rounded hover:bg-blue-500/20 transition opacity-0 group-hover:opacity-100"
-                                                                    title="Düzenle"
-                                                                >
-                                                                    ✏️
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteProduct(product.id)}
-                                                                    className="text-red-500 bg-red-500/10 p-1.5 rounded hover:bg-red-500/20 transition opacity-0 group-hover:opacity-100"
-                                                                    title="Sil"
-                                                                >
-                                                                    🗑️
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-xs text-zinc-500 mb-4">
-                                                            <span className="bg-zinc-800 px-2 py-0.5 rounded">{product.price}₺</span>
-                                                            {product.costPrice && <span className="bg-yellow-900/20 text-yellow-600 px-2 py-0.5 rounded">Maliyet: {product.costPrice}₺</span>}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-auto">
-                                                        <div className="flex items-center gap-2">
-                                                            <label className="text-[10px] text-zinc-500">Stok:</label>
-                                                            <input
-                                                                type="number"
-                                                                value={product.stock}
-                                                                onChange={(e) => handleStockChange(product.id, e.target.value)}
-                                                                className="w-16 bg-black/50 border border-zinc-700 rounded-lg p-1 text-center text-primary font-bold text-sm focus:outline-none focus:border-primary"
-                                                            />
-                                                        </div>
-                                                        <button
-                                                            onClick={async () => {
-                                                                const updated = products.map(p =>
-                                                                    p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
-                                                                );
-                                                                setProducts(updated);
-                                                                await saveProducts(updated);
-                                                            }}
-                                                            className={`text-xs px-2 py-1 rounded transition ${product.isVisible === false ? 'bg-zinc-800 text-zinc-500' : 'bg-green-500/10 text-green-500'}`}
-                                                        >
-                                                            {product.isVisible === false ? "Gizli 👁️‍🗨️" : "Yayında 👁️"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {/* Product Table (Collapsible) */}
+                                        {isExpanded && (
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left border-t border-white/5">
+                                                    <thead className="bg-white/5 text-xs text-zinc-400 uppercase">
+                                                        <tr>
+                                                            <th className="p-3 w-10 text-center">#</th>
+                                                            <th className="p-3">Ürün</th>
+                                                            <th className="p-3 text-right">Fiyat</th>
+                                                            <th className="p-3 text-center">Stok</th>
+                                                            <th className="p-3 text-center">Durum</th>
+                                                            <th className="p-3 text-right">İşlem</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-white/5">
+                                                        {categoryProducts.map((product, index) => (
+                                                            <tr key={product.id} className="hover:bg-white/5 transition group">
+                                                                <td className="p-3 text-center">
+                                                                    <div className="flex flex-col gap-1 items-center justify-center opacity-30 group-hover:opacity-100 transition">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                const idx = products.findIndex(p => p.id === product.id);
+                                                                                let targetIdx = -1;
+                                                                                for (let i = idx - 1; i >= 0; i--) {
+                                                                                    if (products[i].category === product.category) { targetIdx = i; break; }
+                                                                                }
+                                                                                if (targetIdx !== -1) {
+                                                                                    const newP = [...products];
+                                                                                    [newP[targetIdx], newP[idx]] = [newP[idx], newP[targetIdx]];
+                                                                                    setProducts(newP);
+                                                                                    saveProducts(newP);
+                                                                                }
+                                                                            }}
+                                                                            className="hover:text-primary"
+                                                                        >▲</button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                const idx = products.findIndex(p => p.id === product.id);
+                                                                                let targetIdx = -1;
+                                                                                for (let i = idx + 1; i < products.length; i++) {
+                                                                                    if (products[i].category === product.category) { targetIdx = i; break; }
+                                                                                }
+                                                                                if (targetIdx !== -1) {
+                                                                                    const newP = [...products];
+                                                                                    [newP[targetIdx], newP[idx]] = [newP[idx], newP[targetIdx]];
+                                                                                    setProducts(newP);
+                                                                                    saveProducts(newP);
+                                                                                }
+                                                                            }}
+                                                                            className="hover:text-primary"
+                                                                        >▼</button>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-3">
+                                                                    <div className="flex items-center gap-3">
+                                                                        {product.imageUrl ? (
+                                                                            <img src={product.imageUrl} className="w-8 h-8 rounded object-cover bg-black/20" />
+                                                                        ) : (
+                                                                            <span className="text-xl">{product.emoji || '📦'}</span>
+                                                                        )}
+                                                                        <span className="font-medium text-sm text-zinc-200">{product.name}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-3 text-right font-mono text-zinc-300">
+                                                                    {product.price}₺
+                                                                    {product.costPrice && <span className="block text-[10px] text-zinc-600">Mal: {product.costPrice}₺</span>}
+                                                                </td>
+                                                                <td className="p-3 text-center">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={product.stock}
+                                                                        onChange={(e) => handleStockChange(product.id, e.target.value)}
+                                                                        className="w-12 bg-black/40 border border-zinc-700 rounded p-1 text-center text-sm focus:border-primary focus:outline-none"
+                                                                    />
+                                                                </td>
+                                                                <td className="p-3 text-center">
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            const updated = products.map(p =>
+                                                                                p.id === product.id ? { ...p, isVisible: p.isVisible === false ? true : false } : p
+                                                                            );
+                                                                            setProducts(updated);
+                                                                            await saveProducts(updated);
+                                                                        }}
+                                                                        className={`p-1.5 rounded-lg transition ${product.isVisible === false ? 'bg-zinc-800 text-zinc-600' : 'bg-green-500/10 text-green-500'}`}
+                                                                        title={product.isVisible === false ? "Görünmez" : "Görünür"}
+                                                                    >
+                                                                        {product.isVisible === false ? "👁️‍🗨️" : "👁️"}
+                                                                    </button>
+                                                                </td>
+                                                                <td className="p-3 text-right">
+                                                                    <div className="flex items-center justify-end gap-2">
+                                                                        <button
+                                                                            onClick={() => setEditingProduct(product)}
+                                                                            className="p-1.5 hover:bg-blue-500/20 text-blue-500 rounded transition"
+                                                                            title="Düzenle"
+                                                                        >
+                                                                            ✏️
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteProduct(product.id)}
+                                                                            className="p-1.5 hover:bg-red-500/20 text-red-500 rounded transition"
+                                                                            title="Sil"
+                                                                        >
+                                                                            🗑️
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })
@@ -634,328 +731,13 @@ export default function AdminPage() {
                 </div>
             )}
 
-            {/* Product Approval Section */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-8 mt-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <span className="bg-yellow-500/20 text-yellow-500 p-2 rounded-lg">⏳</span>
-                    Bekleyen Ürün Onayları
-                </h2>
-                <ProductApproval />
-            </div>
 
-            {/* Seller Management Section */}
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <span className="bg-purple-500/20 text-purple-500 p-2 rounded-lg">👥</span>
-                    Satıcı Yönetimi
-                </h2>
-                <SellerManagement />
-            </div>
+
+
         </div>
     );
 }
 
-function ProductApproval() {
-    const [pendingProducts, setPendingProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
 
-    const fetchPendingProducts = async () => {
-        try {
-            const res = await fetch("/api/admin/products/list");
-            if (res.ok) {
-                const data: Product[] = await res.json();
-                setPendingProducts(data.filter(p => p.approvalStatus === 'pending'));
-            }
-        } catch (error) {
-            console.error("Failed to fetch products");
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    useEffect(() => {
-        fetchPendingProducts();
-    }, []);
 
-    const handleApproval = async (id: number, action: 'approve' | 'reject') => {
-        if (!confirm(`Bu ürünü ${action === 'approve' ? 'onaylamak' : 'reddetmek'} istediğinize emin misiniz?`)) return;
-
-        try {
-            const res = await fetch("/api/admin/products/approve", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, action })
-            });
-
-            if (res.ok) {
-                alert("İşlem başarılı.");
-                fetchPendingProducts();
-            } else {
-                alert("Bir hata oluştu.");
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    if (loading) return <div className="text-zinc-500">Yükleniyor...</div>;
-    if (pendingProducts.length === 0) return <div className="text-zinc-500 italic">Bekleyen ürün onayı yok.</div>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-zinc-400">
-                <thead className="text-xs uppercase bg-zinc-900/50 text-zinc-300">
-                    <tr>
-                        <th className="px-4 py-3 rounded-l-lg">Ürün</th>
-                        <th className="px-4 py-3">Fiyat</th>
-                        <th className="px-4 py-3">Satıcı</th>
-                        <th className="px-4 py-3 rounded-r-lg text-right">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                    {pendingProducts.map((p) => (
-                        <tr key={p.id} className="hover:bg-zinc-900/30 transition">
-                            <td className="px-4 py-3 flex items-center gap-3">
-                                {p.imageUrl ? (
-                                    <img src={p.imageUrl} alt={p.name} className="w-10 h-10 object-cover rounded bg-zinc-800" />
-                                ) : (
-                                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center">{p.emoji || "📦"}</div>
-                                )}
-                                <span className="text-white font-medium">{p.name}</span>
-                            </td>
-                            <td className="px-4 py-3 text-zinc-300">{p.price}₺</td>
-                            <td className="px-4 py-3 text-zinc-300">@{p.seller}</td>
-                            <td className="px-4 py-3 text-right space-x-2">
-                                <button
-                                    onClick={() => handleApproval(p.id, 'approve')}
-                                    className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-md text-xs transition"
-                                >
-                                    Onayla
-                                </button>
-                                <button
-                                    onClick={() => handleApproval(p.id, 'reject')}
-                                    className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-md text-xs transition"
-                                >
-                                    Reddet
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-function SellerManagement() {
-    const [sellers, setSellers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedSeller, setSelectedSeller] = useState<any>(null); // For modal
-
-    useEffect(() => {
-        const fetchSellers = async () => {
-            try {
-                const res = await fetch("/api/admin/sellers");
-                if (res.ok) {
-                    const data = await res.json();
-                    setSellers(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch sellers", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSellers();
-    }, []);
-
-    const fetchSellers = async () => {
-        try {
-            const res = await fetch("/api/admin/sellers");
-            if (res.ok) {
-                const data = await res.json();
-                setSellers(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch sellers", error);
-        }
-    };
-
-    const handleStatusUpdate = async (username: string, action: string, e: any) => {
-        if (e && e.stopPropagation) e.stopPropagation(); // Prevent modal opening if event exists
-
-        let body: any = { username, action };
-
-        if (action === 'updateLimit') {
-            if (!confirm(`Bu satıcının ürün limitini ${e.target.value} olarak güncellemek istiyor musunuz?`)) return;
-            body.limit = e.target.value;
-        } else {
-            if (!confirm(`Bu satıcıyı ${action === 'approve' ? 'onaylamak' : action === 'reject' ? 'reddetmek' : 'yasaklamak'} istediğinize emin misiniz?`)) return;
-        }
-
-        try {
-            const res = await fetch("/api/admin/sellers/update", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
-
-            if (res.ok) {
-                alert("İşlem başarılı.");
-                fetchSellers();
-            } else {
-                alert("Bir hata oluştu.");
-            }
-        } catch (error) {
-            console.error("Update error", error);
-        }
-    };
-
-    if (loading) return <div className="text-zinc-500">Yükleniyor...</div>;
-
-    if (sellers.length === 0) return <div className="text-zinc-500">Henüz satıcı başvurusu yok.</div>;
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-zinc-400">
-                <thead className="text-xs uppercase bg-zinc-900/50 text-zinc-300">
-                    <tr>
-                        <th className="px-4 py-3 rounded-l-lg">Kullanıcı</th>
-                        <th className="px-4 py-3">Durum</th>
-                        <th className="px-4 py-3">Ürün</th>
-                        <th className="px-4 py-3">Satış</th>
-                        <th className="px-4 py-3">Tarih</th>
-                        <th className="px-4 py-3 rounded-r-lg text-right">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                    {sellers.map((seller) => (
-                        <tr
-                            key={seller.username}
-                            className="hover:bg-zinc-900/30 transition cursor-pointer group"
-                            onClick={() => setSelectedSeller(seller)}
-                        >
-                            <td className="px-4 py-3 font-medium text-white group-hover:text-blue-400 transition-colors">
-                                {seller.display_name}
-                                <div className="text-xs text-zinc-600">@{seller.username}</div>
-                            </td>
-                            <td className="px-4 py-3">
-                                <span className={`px-2 py-1 rounded text-xs font-bold ${seller.status === 'active' ? 'bg-green-500/10 text-green-500' :
-                                    seller.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
-                                        'bg-red-500/10 text-red-500'
-                                    }`}>
-                                    {seller.status === 'active' ? 'Aktif' :
-                                        seller.status === 'pending' ? 'Bekliyor' : 'Pasif'}
-                                </span>
-                            </td>
-                            <td className="px-4 py-3">{seller.productCount || 0}</td>
-                            <td className="px-4 py-3 text-white font-bold">{seller.salesCount || 0}</td>
-                            <td className="px-4 py-3">
-                                {new Date(seller.joinedAt).toLocaleDateString("tr-TR")}
-                            </td>
-                            <td className="px-4 py-3 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
-                                {seller.status === 'pending' && (
-                                    <>
-                                        <button
-                                            onClick={(e) => handleStatusUpdate(seller.username, 'approve', e)}
-                                            className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-md text-xs transition"
-                                        >
-                                            Onayla
-                                        </button>
-                                        <button
-                                            onClick={(e) => handleStatusUpdate(seller.username, 'reject', e)}
-                                            className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-md text-xs transition"
-                                        >
-                                            Reddet
-                                        </button>
-                                    </>
-                                )}
-                                {seller.status === 'active' && (
-                                    <button
-                                        onClick={(e) => handleStatusUpdate(seller.username, 'ban', e)}
-                                        className="bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1 rounded-md text-xs transition"
-                                    >
-                                        Yasakla
-                                    </button>
-                                )}
-                                {seller.status === 'banned' && (
-                                    <button
-                                        onClick={(e) => handleStatusUpdate(seller.username, 'approve', e)}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-xs transition"
-                                    >
-                                        Yasağı Kaldır
-                                    </button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Seller Details Modal */}
-            {selectedSeller && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setSelectedSeller(null)}>
-                    <div className="glass-card p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold">{selectedSeller.display_name}</h2>
-                                <p className="text-zinc-500">@{selectedSeller.username} • {selectedSeller.productCount} Ürün • {selectedSeller.salesCount} Satış</p>
-
-                                {/* Limit Update UI */}
-                                <div className="mt-2 flex items-center gap-2">
-                                    <label className="text-xs text-zinc-400">Ürün Limiti:</label>
-                                    <input
-                                        type="number"
-                                        defaultValue={selectedSeller.productLimit || 2}
-                                        className="w-16 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
-                                        onBlur={(e) => {
-                                            const val = parseInt(e.target.value);
-                                            if (!isNaN(val)) {
-                                                handleStatusUpdate(selectedSeller.username, 'updateLimit', { ...e, target: { ...e.target, value: val } } as any);
-                                            }
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.currentTarget.blur();
-                                            }
-                                        }}
-                                    />
-                                    <span className="text-[10px] text-zinc-600">(Enter veya dışarı tıkla)</span>
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedSeller(null)} className="text-zinc-500 hover:text-white text-2xl">✕</button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {selectedSeller.products && selectedSeller.products.length > 0 ? (
-                                selectedSeller.products.map((p: any) => (
-                                    <div key={p.id} className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 flex gap-3 items-center">
-                                        {p.imageUrl ? (
-                                            <img src={p.imageUrl} className="w-12 h-12 object-cover rounded bg-zinc-800" />
-                                        ) : (
-                                            <div className="w-12 h-12 bg-zinc-800 rounded flex items-center justify-center">{p.emoji || "📦"}</div>
-                                        )}
-                                        <div>
-                                            <div className="font-bold text-sm">{p.name}</div>
-                                            <div className="text-xs text-zinc-500">{p.price}₺ • Stok: {p.stock}</div>
-                                            <div className={`text-[10px] mt-1 inline-block px-1.5 py-0.5 rounded ${p.approvalStatus === 'approved' ? 'bg-green-500/20 text-green-500' :
-                                                p.approvalStatus === 'rejected' ? 'bg-red-500/20 text-red-500' :
-                                                    'bg-yellow-500/20 text-yellow-500'
-                                                }`}>
-                                                {p.approvalStatus === 'approved' ? 'Onaylı' : p.approvalStatus === 'rejected' ? 'Reddedildi' : 'Bekliyor'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="col-span-2 text-center text-zinc-500 py-8">
-                                    Bu satıcının henüz ürünü yok.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}

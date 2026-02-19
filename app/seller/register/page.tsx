@@ -9,6 +9,11 @@ import Link from "next/link";
 export default function SellerRegisterPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        storeName: "",
+        email: "",
+        phone: "",
         username: "",
         password: "",
         confirmPassword: ""
@@ -74,8 +79,70 @@ export default function SellerRegisterPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Ad</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-white outline-none focus:border-purple-500 transition"
+                                placeholder="Adınız"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Soyad</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-white outline-none focus:border-purple-500 transition"
+                                placeholder="Soyadınız"
+                            />
+                        </div>
+                    </div>
+
                     <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Kullanıcı Adı</label>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Mağaza Adı (Görünen İsim)</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.storeName}
+                            onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                            className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-white outline-none focus:border-purple-500 transition"
+                            placeholder="Örn: Kampüs Market"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">E-posta</label>
+                            <input
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-white outline-none focus:border-purple-500 transition"
+                                placeholder="Email"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Telefon</label>
+                            <input
+                                type="tel"
+                                required
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="w-full bg-black/40 border border-zinc-700 rounded-lg p-3 text-white outline-none focus:border-purple-500 transition"
+                                placeholder="0555..."
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1 ml-1">Kullanıcı Adı (Giriş İçin)</label>
                         <input
                             type="text"
                             required

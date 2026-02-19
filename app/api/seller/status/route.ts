@@ -20,9 +20,29 @@ export async function GET() {
         const allProducts = (await dbServer.get("/products")) as Product[] || [];
         const sellerProducts = allProducts.filter(p => p.seller === username);
 
+        // Calculate Revenue
+        const allOrders = (await dbServer.get("/orders")) as any[] || [];
+        let totalRevenue = 0;
+        let totalSales = 0;
+
+        const ordersList = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
+
+        ordersList.forEach((order: any) => {
+            if (order.status !== 'rejected' && order.items && Array.isArray(order.items)) {
+                order.items.forEach((item: any) => {
+                    if (item.seller === username) {
+                        totalRevenue += (item.price || 0) * (item.quantity || 0);
+                        totalSales += (item.quantity || 0);
+                    }
+                });
+            }
+        });
+
         return NextResponse.json({
             productLimit: seller?.productLimit || 2,
-            productCount: sellerProducts.length
+            productCount: sellerProducts.length,
+            totalRevenue,
+            totalSales
         });
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 });
