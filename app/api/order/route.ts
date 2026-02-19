@@ -145,14 +145,23 @@ export async function POST(request: Request) {
             });
 
             // Delivery Fee Logic (Per Order/Seller Group)
-            // If it's a "delivery" order, we apply fee unless > 150TL
-            // Note: If multiple orders share delivery, logic might need distinct handling, 
-            // but simplified Plan assumes each seller group handles its own delivery terms/fees or we apply it once.
-            // For now, implementing: Apply fee if delivery chosen for this sub-order.
-            const currentDeliveryFee = deliveryMethod === "delivery" ? (serverCalculatedTotal >= 150 ? 0 : serverDeliveryFee) : 0;
+            // If seller is admin: Apply fee if < 150
+            // If seller is other: Always free (seller handles it or included)
+            let currentDeliveryFee = 0;
+            const isDelivery = deliveryMethod === "delivery";
+            const isAdmin = !orderSeller || orderSeller === 'admin';
+
+            if (isDelivery) {
+                if (isAdmin) {
+                    currentDeliveryFee = serverCalculatedTotal >= 150 ? 0 : serverDeliveryFee;
+                } else {
+                    currentDeliveryFee = 0;
+                }
+            }
+
             const grandTotal = serverCalculatedTotal + currentDeliveryFee;
 
-            if (deliveryMethod === "delivery") totalProfit += currentDeliveryFee;
+            if (isDelivery) totalProfit += currentDeliveryFee;
 
             const orderId = Date.now().toString(36) + Math.random().toString(36).substring(2);
             const orderRecord = {
