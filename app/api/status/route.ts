@@ -12,14 +12,16 @@ export async function GET() {
             dbServer.get("/deliveryFee")
         ]);
 
-        console.log("API/STATUS GET:", { isOpen, deliveryAvailable, deliveryFee });
-
-        return NextResponse.json({
+        const status = {
             isOpen: isOpen === null ? true : isOpen,
             deliveryAvailable: deliveryAvailable === null ? true : deliveryAvailable,
             deliveryFee: deliveryFee === null ? 5 : Number(deliveryFee)
-        });
-    } catch (error) {
+        };
+
+        console.log("Status Fetch Result:", status);
+        return NextResponse.json(status);
+    } catch (error: any) {
+        console.error("Status GET Error:", error.message);
         return NextResponse.json({ error: "Failed to fetch status" }, { status: 500 });
     }
 }
@@ -34,23 +36,27 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        console.log("API/STATUS POST Body:", body);
+        console.log("Status Update Request:", body);
 
         if (body.isOpen !== undefined) {
             await dbServer.put("/shopStatus", body.isOpen);
+            console.log("Updated shopStatus:", body.isOpen);
         }
 
         if (body.deliveryAvailable !== undefined) {
             await dbServer.put("/deliveryStatus", body.deliveryAvailable);
+            console.log("Updated deliveryStatus:", body.deliveryAvailable);
         }
 
         if (body.deliveryFee !== undefined) {
-            console.log("Updating deliveryFee to:", Number(body.deliveryFee));
-            await dbServer.put("/deliveryFee", Number(body.deliveryFee));
+            const fee = Number(body.deliveryFee);
+            await dbServer.put("/deliveryFee", fee);
+            console.log("Updated deliveryFee:", fee);
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Status Update Error:", error.message);
         return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
     }
 }

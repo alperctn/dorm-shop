@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 // GET: Public - Fetch all products
 export async function GET() {
     try {
-        const data = (await dbServer.get("/products")) || [];
+        const rawData = await dbServer.get("/products");
+        const data = dbServer.toArray(rawData);
 
         // Filter: Show Admin items (no seller) OR Approved Seller Items
         const visibleProducts = data.filter((p: any) =>

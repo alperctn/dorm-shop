@@ -21,15 +21,9 @@ export async function GET() {
         if (!sellersData) return NextResponse.json([]);
 
         // 3. Process Data
-        let sellers = [];
-        if (Array.isArray(sellersData)) {
-            sellers = sellersData.filter(Boolean);
-        } else {
-            sellers = Object.values(sellersData);
-        }
-
-        const allProducts = (productsData as any[]) || [];
-        const allOrders = ordersData ? (Array.isArray(ordersData) ? ordersData : Object.values(ordersData)) : [];
+        const sellers = dbServer.toArray(sellersData);
+        const allProducts = dbServer.toArray(productsData);
+        const allOrders = dbServer.toArray(ordersData);
 
         // 4. Sort by joinedAt desc
         sellers.sort((a: any, b: any) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime());

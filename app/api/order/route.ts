@@ -68,13 +68,14 @@ export async function POST(request: Request) {
         }
 
         // 1. Fetch current stock & delivery fee
-        const [products, dbFee] = await Promise.all([
+        const [rawProducts, dbFee] = await Promise.all([
             dbServer.get("/products"),
             dbServer.get("/deliveryFee")
         ]);
+        const products = dbServer.toArray(rawProducts);
         const serverDeliveryFee = dbFee === null ? 5 : Number(dbFee); // Default global fee (if used)
 
-        if (!products) {
+        if (!products || products.length === 0) {
             logger.critical("Database connection failed or products missing");
             return NextResponse.json({ error: "Sistem hatası: Ürünler yüklenemedi." }, { status: 500 });
         }

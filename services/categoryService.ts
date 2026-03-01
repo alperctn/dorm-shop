@@ -22,15 +22,7 @@ export const fetchCategories = async (): Promise<Category[]> => {
         return INITIAL_CATEGORIES;
     }
 
-    let categories: Category[] = [];
-
-    // If data is array
-    if (Array.isArray(data)) {
-        categories = data.filter(Boolean);
-    } else {
-        // If data is object (Firebase formatted), convert to array
-        categories = Object.values(data);
-    }
+    const categories = db.toArray(data);
 
     // Auto-migrate: Check if "Yurt İhtiyaçları" exists, if not add it
     const yurtCatExists = categories.some(c => c.slug === "yurt-ihtiyaclari");
